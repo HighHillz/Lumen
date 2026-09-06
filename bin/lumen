@@ -15,7 +15,7 @@
 #   lumen status                  What's running and the installed version
 
 SCRIPTS="${XDG_CONFIG_HOME:-$HOME/.config}/hypr/scripts"
-ENGINE="$SCRIPTS/ricelin-update.py"
+ENGINE="$SCRIPTS/lumen-update.py"
 WATCHDOG="$SCRIPTS/watchdog.sh"
 
 # The installer's Hanko skin: a vermilion edge marker, a quiet connector gutter
@@ -106,7 +106,7 @@ installed_version() {
         fi
     fi
 
-    mf="${XDG_STATE_HOME:-$HOME/.local/state}/ricelin/update.json"
+    mf="${XDG_STATE_HOME:-$HOME/.local/state}/lumen/update.json"
 
     if [ -f "$mf" ] && command -v jq >/dev/null 2>&1; then
         sha=$(jq -r '.syncedSha // empty' "$mf")

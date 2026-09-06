@@ -1,5 +1,5 @@
 
-# Ricelin
+# Lumen
 
 **My personal Hyprland setup on Arch Linux, built around a custom Quickshell interface.**
 
@@ -144,5 +144,5 @@ setup.
 
 ## Credits
 
-This repository is based on [Ricelin](https://github.com/Gakuseei/Ricelin)
+This repository is based on the upstream [Ricelin] project(https://github.com/Gakuseei/Ricelin)
 and contains my personal modifications and configuration changes.

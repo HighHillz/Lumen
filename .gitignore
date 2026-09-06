@@ -11,8 +11,6 @@ Thumbs.db
 *.legacy
 
 # install.sh ownership markers and config backups, only ever live under ~/.config
-.ricelin-managed
-*.bak-ricelin-*
 
 # Per-machine
 .envrc
@@ -68,7 +66,6 @@ docs/
 /configs/decisions.md
 /configs/mount-disks.sh
 /configs/grub/probe-sda4.sh
-/configs/grub/10_ricelin
 __pycache__/
 configs/hypr/hyprsunset.conf
 .impeccable/
