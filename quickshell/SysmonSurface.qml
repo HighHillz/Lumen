@@ -296,7 +296,7 @@ PillSurface {
 
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            text: cell.key === "net" ? "Net · MB/s"
+                            text: cell.key === "net" ? "Net · " + (Math.max(Sysmon.netDown, Sysmon.netUp)>=1?"MB/S": "KB/S")
                                 : cell.key === "disk" ? "Disk · %"
                                 : cell.key === "swap" ? "Swap · GB"
                                 : "VRAM · GB"
@@ -314,7 +314,9 @@ PillSurface {
                             visible: cell.key === "net"
 
                             Text {
-                                text: "↓" + Sysmon.netDown.toFixed(1)
+                              text: "↓" + (Math.max(Sysmon.netDown,Sysmon.netUp)>=1
+                                  ? Sysmon.netDown.toFixed(1)
+                                  : (Sysmon.netDown*1024).toFixed(1))
                                 color: Theme.cream
                                 font.family: Theme.font
                                 font.pixelSize: 13 * root.s
@@ -322,7 +324,9 @@ PillSurface {
                                 font.features: { "tnum": 1 }
                             }
                             Text {
-                                text: "↑" + Sysmon.netUp.toFixed(1)
+                              text: "↑" + (Math.max(Sysmon.netDown,Sysmon.netUp)>=1
+                                  ? Sysmon.netUp.toFixed(1)
+                                  : (Sysmon.netUp*1024).toFixed(1))
                                 color: Theme.vermLit
                                 font.family: Theme.font
                                 font.pixelSize: 13 * root.s

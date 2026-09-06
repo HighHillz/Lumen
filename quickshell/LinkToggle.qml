@@ -3,7 +3,7 @@ import "Singletons"
 
 /**
  * Toggle switch: tile bg off, terracotta fill on, cream knob slides on the
- * fast motion token. Shared by the wifi, bluetooth and hotspot controls.
+ * fast motion token. Shared by the wifi and bluetooth controls.
  */
 Rectangle {
     id: toggle
