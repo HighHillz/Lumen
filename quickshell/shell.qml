@@ -40,7 +40,6 @@ ShellRoot {
     Component.onCompleted: {
         refresh();
         Devices.restore();
-        void GameMode.active;
     }
         Connections {
         target: Quickshell
@@ -193,7 +192,6 @@ ShellRoot {
                 ScreenRec.quickChoosing = true;
             }
         }
-        function gameMode(mon: string): void { Flags.gameMode = !Flags.gameMode; }
         function dnd(mon: string): void { Flags.dnd = !Flags.dnd; }
         function sysmon(mon: string): void { root.toggleSurface(mon, "sysmon"); }
         function system(mon: string): void { root.toggleSurface(mon, "sysmon"); }
@@ -241,16 +239,15 @@ ShellRoot {
             /** Trimming the reserved band below the pill's bottom lets windows climb, so App gap sets the pill-to-window air without touching the desktop gaps_out. */
             readonly property real reservedH: Math.max(0, restHeight + topGap - 12 * (1 - Flags.appGap) * s)
 
-            readonly property real gameBarH: 34 * s
 
             screen: modelData
             color: "transparent"
             exclusionMode: ExclusionMode.Normal
-            exclusiveZone: Flags.gameMode ? gameBarH : reservedH
+            exclusiveZone: reservedH
             aboveWindows: true
 
             anchors { top: true; left: true; right: true }
-            implicitHeight: Flags.gameMode ? gameBarH : reservedH
+            implicitHeight: reservedH
 
             mask: emptyReserve
             Region { id: emptyReserve }

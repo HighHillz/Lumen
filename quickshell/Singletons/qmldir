@@ -17,4 +17,3 @@ singleton Cava Cava.qml
 singleton Spaces Spaces.qml
 singleton Players Players.qml
 singleton NightLight NightLight.qml
-singleton GameMode GameMode.qml

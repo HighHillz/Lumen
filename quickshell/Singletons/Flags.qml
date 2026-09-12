@@ -41,7 +41,6 @@ Singleton {
     property alias recordClearedBefore: adapter.recordClearedBefore
     property alias weatherCity: adapter.weatherCity
     property alias musicViz: adapter.musicViz
-    property alias gameMode: adapter.gameMode
     property alias gamePrevDnd: adapter.gamePrevDnd
     property alias gamePrevViz: adapter.gamePrevViz
     property alias gamePrevAwake: adapter.gamePrevAwake
@@ -99,7 +98,6 @@ Singleton {
             property real recordClearedBefore: 0
             property string weatherCity: ""
             property bool musicViz: true
-            property bool gameMode: false
             property bool gamePrevDnd: false
             property bool gamePrevViz: true
             property bool gamePrevAwake: false

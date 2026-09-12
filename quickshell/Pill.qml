@@ -242,12 +242,11 @@ Item {
 
     readonly property string mode: dragActive ? "dragOver"
         : (surfaceOpen && surfaces[surface] !== undefined ? surface
-        : (Flags.gameMode ? "game"
         : (quickChoosing ? "quickChoose"
         : (quickCounting ? "quickCount"
         : (osdActive && !held ? "osd"
         : (toastActive && !held ? "toast"
-        : (expanded ? "hover" : "rest")))))))
+        : (expanded ? "hover" : "rest"))))))
 
     /**
      * AppImage drag-install state, live only while a file hovers the resting pill.

@@ -23,7 +23,6 @@ hl.bind(mod .. " + Space", hl.dsp.exec_cmd('qs ipc call pill launcher ""')) -- L
 hl.bind(mod .. " + V", hl.dsp.exec_cmd('qs ipc call pill clipboard ""')) -- Clipboard
 hl.bind(mod .. " + C", hl.dsp.exec_cmd('qs ipc call pill wallpaper ""')) -- Wallpaper
 hl.bind(mod .. " + B", hl.dsp.exec_cmd('~/.config/hypr/scripts/wallpaper.sh ""')) -- Shuffle wallpaper and retheme
-hl.bind(mod .. " + G", hl.dsp.exec_cmd('qs ipc call pill gameMode ""')) -- Game mode
 hl.bind(mod .. " + H", hl.dsp.exec_cmd('qs ipc call pill dnd ""')) -- Toggle DnD
 
 hl.bind(mod .. " + X", hl.dsp.exec_cmd('qs ipc call pill power ""')) -- Power
@@ -97,7 +96,7 @@ hl.bind(mod .. " + SHIFT + S", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.config/hy
 -- Screenshots & Color Tools
 -- ============================================================================
 
---hl.bind(mod .. " + SHIFT + S", hl.dsp.exec_cmd("hyprshot -m region --freeze"))
+hl.bind("Print", hl.dsp.exec_cmd("hyprshot -m region --freeze"))
 hl.bind(mod .. " + SHIFT + C", hl.dsp.exec_cmd("hyprpicker -a"))
 
 -- ============================================================================

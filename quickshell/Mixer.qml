@@ -339,13 +339,6 @@ PillSurface {
                 tipDesc: "Warm the screen"
                 onToggled: NightLight.setMode(Flags.nightLightMode === "off" ? "on" : "off")
             }
-            IconChip {
-                glyph: "gamepad"
-                on: Flags.gameMode
-                tipTitle: "Game mode"
-                tipDesc: "Strip effects, quiet the desktop"
-                onToggled: Flags.gameMode = !Flags.gameMode
-            }
         }
     }
 
