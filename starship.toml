@@ -9,17 +9,17 @@ $character"""
 # CHARACTER (PROMPT SYMBOL)
 # --------------------------
 [character]
-success_symbol = "[   ](bold fg:#74a0f1)"
-error_symbol   = "[   ](bold fg:#446cb4)"
+success_symbol = "[   ](bold fg:#74b1f1)"
+error_symbol   = "[   ](bold fg:#4378b1)"
 
 # --------------------------
 # GIT BRANCH
 # --------------------------
 [git_branch]
 symbol = "󰘬"
-style = "bg:#446cb4 fg:#f7f7f8"
+style = "bg:#4378b1 fg:#f7f7f8"
 truncation_length = 12
-format = "󰜥 [](bold fg:#446cb4)[$symbol $branch]($style)[ ](bold fg:#446cb4)"
+format = "󰜥 [](bold fg:#4378b1)[$symbol $branch]($style)[ ](bold fg:#4378b1)"
 
 # --------------------------
 # DIRECTORY
@@ -27,8 +27,8 @@ format = "󰜥 [](bold fg:#446cb4)[$symbol $branch]($style)[ ](bold fg:#44
 [directory]
 home_symbol = "  "
 read_only = "  "
-style = "bg:#1c2d4a fg:#f7f7f8"
-format = '[](bold fg:#1c2d4a)[󰉋 $path]($style)[](bold fg:#1c2d4a)'
+style = "bg:#1b3047 fg:#f7f7f8"
+format = '[](bold fg:#1b3047)[󰉋 $path]($style)[](bold fg:#1b3047)'
 
 [directory.substitutions]
 "Desktop" = "  "
@@ -44,15 +44,15 @@ format = '[](bold fg:#1c2d4a)[󰉋 $path]($style)[](bold fg:#1c2d4a)'
 # --------------------------
 [cmd_duration]
 min_time = 0
-style = "bg:#74a0f1 fg:#f7f7f8"
-format = '[](bold fg:#74a0f1)[󰪢 $duration]($style)[](bold fg:#74a0f1)'
+style = "bg:#74b1f1 fg:#f7f7f8"
+format = '[](bold fg:#74b1f1)[󰪢 $duration]($style)[](bold fg:#74b1f1)'
 
 # --------------------------
 # HOSTNAME
 # --------------------------
 [hostname]
-style = "bg:#335085 fg:#f7f7f8"
-format = "[](bold fg:#335085)[•$hostname]($style)[](bold fg:#335085)"
+style = "bg:#315982 fg:#f7f7f8"
+format = "[](bold fg:#315982)[•$hostname]($style)[](bold fg:#315982)"
 ssh_only = false
 disabled = false
 
@@ -60,8 +60,8 @@ disabled = false
 # USERNAME
 # --------------------------
 [username]
-style_user = "bold bg:#182740 fg:#f7f7f8"
-format = "[](bold fg:#182740)[$user]($style)[](bold fg:#182740)"
+style_user = "bold bg:#172a3d fg:#f7f7f8"
+format = "[](bold fg:#172a3d)[$user]($style)[](bold fg:#172a3d)"
 show_always = true
 
 # --------------------------
@@ -79,5 +79,5 @@ detect_extensions = []
 detect_files = []
 detect_folders = []
 symbol = ""
-style = "bg:#0940a5 fg:#e4e5e7"
-format = '[](bold fg:#0940a5)[$symbol ($virtualenv)]($style)[](bold fg:#0940a5)'
+style = "bg:#0954a4 fg:#e4e5e7"
+format = '[](bold fg:#0954a4)[$symbol ($virtualenv)]($style)[](bold fg:#0954a4)'

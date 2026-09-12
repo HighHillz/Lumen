@@ -42,3 +42,14 @@ hl.layer_rule({
     match   = { namespace = "pill" },
     no_anim = true,
 })
+
+local ok, stashApps = pcall(require, "modules.stash-apps")
+if ok and type(stashApps) == "table" then
+    for _, cls in ipairs(stashApps) do
+        hl.window_rule({
+            name      = "stash-" .. cls,
+            match     = { class = cls },
+            workspace = "special:stash",
+        })
+    end
+end

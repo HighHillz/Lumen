@@ -9,9 +9,3 @@ require("modules.spaces-apply")
 require("modules.autostart")
 
 pcall(require, "modules.private")
-
--- Personal machine-only hooks (gitignored local.lua: discord, crosshair, ...)
-pcall(require, "local")
-
--- GhostType hotkey (managed by the app)
-pcall(require, "ghosttype")

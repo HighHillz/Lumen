@@ -90,14 +90,14 @@ hl.bind(mod .. " + P", hl.dsp.workspace.toggle_special("private"))
 hl.bind(mod .. " + SHIFT + P", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.config/hypr/scripts/special-toggle.sh private"))
 
 -- Stash workspace is currently disabled
--- hl.bind(mod .. " + S", hl.dsp.workspace.toggle_special("stash"))
--- hl.bind(mod .. " + SHIFT + S", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.config/hypr/scripts/special-toggle.sh stash"))
+hl.bind(mod .. " + S", hl.dsp.workspace.toggle_special("stash"))
+hl.bind(mod .. " + SHIFT + S", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.config/hypr/scripts/special-toggle.sh stash"))
 
 -- ============================================================================
 -- Screenshots & Color Tools
 -- ============================================================================
 
-hl.bind(mod .. " + SHIFT + S", hl.dsp.exec_cmd("hyprshot -m region --freeze"))
+--hl.bind(mod .. " + SHIFT + S", hl.dsp.exec_cmd("hyprshot -m region --freeze"))
 hl.bind(mod .. " + SHIFT + C", hl.dsp.exec_cmd("hyprpicker -a"))
 
 -- ============================================================================

@@ -227,7 +227,7 @@ sync_videos() {
 
   while IFS=$'\t' read -r o pic; do
     [ -n "$o" ] || continue
-    setsid -f mpvpaper -p -o "no-audio loop-file=inf hwdec=auto panscan=1.0" "$o" "$pic" >/dev/null 2>&1
+    setsid -f mpvpaper -p -o "no-audio loop-file=inf hwdec=auto panscan=1.0 --load-scripts=no" "$o" "$pic" >/dev/null 2>&1
   done <<<"$desired"
 }
 
