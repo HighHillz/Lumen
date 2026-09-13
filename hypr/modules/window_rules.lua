@@ -30,6 +30,18 @@ hl.window_rule({
 })
 
 hl.window_rule({
+
+    name  = "spotify-transparency",
+
+    match = { class = "^spotify$" },
+
+    opacity = 0.7,
+    
+    xray = false,
+
+})
+
+hl.window_rule({
     name         = "idle-inhibit-fullscreen",
     match        = { class = ".*" },
     idle_inhibit = "fullscreen",

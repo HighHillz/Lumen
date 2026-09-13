@@ -266,6 +266,8 @@ palette_update() {
     python3 "$(dirname "$0")/wallcolors.py" "$show" >>"$WLOG" 2>&1 || true
   fi
 
+  spicetify refresh >/dev/null 2>&1 || true
+
   hyprctl reload >/dev/null 2>&1 || true
 
   # Reload the configuration of every running Kitty instance.

@@ -464,6 +464,91 @@ format = '[î‚¶](bold fg:{{primary_container}})[$symbol ($virtualenv)]($style)[î‚
     ).write_text(template)
 
 
+def render_comfy(pill):
+    """
+    Update only the [Lumen] colour scheme in Comfy's color.ini.
+
+    Existing Comfy schemes and all other theme files remain untouched.
+    """
+
+    color_ini = (
+        Path.home()
+        / ".config"
+        / "spicetify"
+        / "Themes"
+        / "Comfy"
+        / "color.ini"
+    )
+
+    if not color_ini.is_file():
+        print(
+            "wallcolors: Comfy color.ini missing, skipping Comfy recolour",
+            file=sys.stderr,
+        )
+        return
+
+    def comfy_hex(value):
+        return value.lstrip("#").upper()
+
+    lumen = {
+        "text": pill["bright"],
+        "subtext": pill["subtle"],
+        "main": pill["surface"],
+        "main-elevated": pill["surface_container_high"],
+        "main-transition": pill["surface_container_low"],
+        "highlight": pill["surface_container"],
+        "highlight-elevated": pill["surface_container_highest"],
+        "sidebar": pill["surface"],
+        "player": pill["surface_container_high"],
+        "card": pill["surface_container"],
+        "shadow": pill["surface"],
+        "selected-row": pill["cream"],
+        "button": pill["primary"],
+        "button-active": pill["primary_container"],
+        "button-disabled": pill["outline"],
+        "tab-active": pill["surface_container_high"],
+        "notification": pill["primary"],
+        "notification-error": "#D25050",
+        "misc": pill["dim"],
+        "play-button": pill["primary"],
+        "play-button-active": pill["primary"],
+        "progress-fg": pill["primary"],
+        "progress-bg": pill["outline_variant"],
+        "heart": pill["primary"],
+        "pagelink-active": pill["primary"],
+        "radio-btn-active": pill["primary"],
+    }
+
+    lines = color_ini.read_text().splitlines()
+
+    start = None
+    end = len(lines)
+
+    for i, line in enumerate(lines):
+        if line.strip() == "[Lumen]":
+            start = i
+            break
+
+    scheme = ["[Lumen]"]
+    scheme.extend(
+        f"{key:<18} = {comfy_hex(value)}"
+        for key, value in lumen.items()
+    )
+
+    if start is None:
+        lines.extend(["", *scheme])
+    else:
+        for i in range(start + 1, len(lines)):
+            if lines[i].startswith("["):
+                end = i
+                break
+
+        lines[start:end] = scheme
+
+    color_ini.write_text("\n".join(lines) + "\n")
+
+
+
 def main():
     if len(sys.argv) < 2:
         return 1
@@ -655,6 +740,8 @@ def main():
     render_kitty(pill)
 
     render_starship(pill)
+
+    render_comfy(pill)
 
     return 0
 
