@@ -35,7 +35,7 @@ hl.window_rule({
 
     match = { class = "^spotify$" },
 
-    opacity = 0.7,
+    opacity = 0.8,
     
     xray = false,
 

@@ -103,7 +103,7 @@ download() {
 
     flags="${XDG_STATE_HOME:-$HOME/.local/state}/lumen/flags.json"
     wpdir=$(jq -r '.wallpaperDir // ""' "$flags" 2>/dev/null || echo "")
-    [ -n "$wpdir" ] || wpdir=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/lumen-wallpaper-dir" 2>/dev/null || true)
+    [ -n "$wpdir" ] || wpdir=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/lumen/lumen-wallpaper-dir" 2>/dev/null || true)
     [ -n "$wpdir" ] || wpdir="$HOME/Pictures/Wallpapers"
     dir="$wpdir/downloads"
     mkdir -p "$dir"

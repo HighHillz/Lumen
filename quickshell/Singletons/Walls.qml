@@ -38,8 +38,8 @@ Singleton {
     readonly property string thumbDir: (Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache")) + "/lumen-wp-thumbs/"
     readonly property string thumbScript: Quickshell.env("HOME") + "/.config/hypr/scripts/wallpaper-thumbs.sh"
     readonly property string setScript: Quickshell.env("HOME") + "/.config/hypr/scripts/wallpaper.sh"
-    readonly property string stateFile: (Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")) + "/lumen-wallpaper"
-    readonly property string dirStateFile: (Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")) + "/lumen-wallpaper-dir"
+    readonly property string stateFile: (Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")) + "/lumen/lumen-wallpaper"
+    readonly property string dirStateFile: (Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")) + "/lumen/lumen-wallpaper-dir"
 
     onWpDirChanged: refresh()
 
@@ -79,8 +79,8 @@ Singleton {
     }
 
     /**
-     * wallpaper.sh blocks through the whole transition (awww wave, matugen,
-     * reload), easily 1-2s; a pick landing in that window used to be silently
+     * wallpaper.sh blocks through the whole transition (awww wave, palette
+     * generation, reload), easily 1-2s; a pick landing in that window used to be silently
      * swallowed. Now the newest request is queued and replayed once the
      * running transition exits, so rapid iteration converges on the last pick.
      */

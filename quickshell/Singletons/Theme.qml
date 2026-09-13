@@ -6,7 +6,7 @@ import Quickshell
  * Pill palette. Two sources: the curated washi/flame hex below is the identity
  * and the default, used whenever the dynamic-palette flag is off. With the flag
  * on, the surfaces and the whole accent ramp follow the wallpaper through the
- * matugen-fed `Dyn` singleton, while the text family, light veils and shadow
+ * `Dyn` singleton, while the text family, light veils and shadow
  * stay locked here so copy keeps its contrast on any generated background. Each
  * token is a single ternary, so static mode renders byte-identical to the fixed
  * theme and only the colours that should breathe with the wallpaper do.
@@ -17,10 +17,8 @@ Singleton {
     /**
      * Bright warm pop shared by the flame glow, charging glyphs, the recording
      * countdown, the unread inbox dot, the calendar's today cell and the held
-     * power tile. The dynamic branch uses the wallpaper accent (Dyn.primary):
-     * matugen's on-primary-container does not populate here and collapses the
-     * token to black, while the accent always loads and contrasts the pill
-     * surface. Static mode keeps the fixed warm hex.
+     * power tile. The dynamic branch uses the wallpaper accent (Dyn.primary), while the
+     * accent always loads and contrasts the pill surface. Static mode keeps the fixed warm hex.
      */
     readonly property color onGlow: dyn ? Dyn.primary : "#ff9a64"
 
@@ -53,7 +51,7 @@ Singleton {
      * Flame canvas ramp: literal hex strings (color type won't work), fed
      * directly to Canvas addColorStop/strokeStyle. A color property serializes
      * to #aarrggbb and corrupts the gradient render, so the dynamic branch passes
-     * matugen's raw hex strings through untouched rather than any Qt.darker math.
+     * Dyn's raw hex strings through untouched rather than any Qt.darker math.
      */
     readonly property string flameInk:   dyn ? Dyn.primary : "#f0795a"
     readonly property string flameEmber: dyn ? Dyn.primaryContainer : "#7e2812"

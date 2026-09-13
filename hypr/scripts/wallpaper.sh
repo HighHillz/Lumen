@@ -18,16 +18,16 @@ if [ -z "$WPDIR" ]; then
   [ -n "$WPDIR" ] || WPDIR="$HOME/Pictures/Wallpapers"
 fi
 
-RESOLVED="${XDG_STATE_HOME:-$HOME/.local/state}/lumen-wallpaper-dir"
+RESOLVED="${XDG_STATE_HOME:-$HOME/.local/state}/lumen/lumen-wallpaper-dir"
 printf '%s\n' "$WPDIR" >"$RESOLVED"
 
 # No-op mode for the QML side: re-resolve the folder and exit before touching any daemon state.
 [ "${1:-}" = "resolve" ] && exit 0
 
-STATE="${XDG_STATE_HOME:-$HOME/.local/state}/lumen-wallpaper"
-MAP="${XDG_STATE_HOME:-$HOME/.local/state}/lumen-wallpaper-map"
-BAG="${XDG_STATE_HOME:-$HOME/.local/state}/lumen-wallpaper-bag"
-STILL="${XDG_STATE_HOME:-$HOME/.local/state}/lumen-wallpaper-still.png"
+STATE="${XDG_STATE_HOME:-$HOME/.local/state}/lumen/lumen-wallpaper"
+MAP="${XDG_STATE_HOME:-$HOME/.local/state}/lumen/lumen-wallpaper-map"
+BAG="${XDG_STATE_HOME:-$HOME/.local/state}/lumen/lumen-wallpaper-bag"
+STILL="${XDG_STATE_HOME:-$HOME/.local/state}/lumen/lumen-wallpaper-still.png"
 WLOG="${XDG_STATE_HOME:-$HOME/.local/state}/lumen/wallcolors.log"
 
 is_video() {

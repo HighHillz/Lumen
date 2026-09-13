@@ -205,7 +205,7 @@ install_wallpaper() {
 	local src="$1" base="$2" name wpdir dest
 	name="${base%.*}"
 	wpdir="$(jq -r '.wallpaperDir // ""' "${XDG_STATE_HOME:-$HOME/.local/state}/lumen/flags.json" 2>/dev/null || echo "")"
-	[ -n "$wpdir" ] || wpdir="$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/lumen-wallpaper-dir" 2>/dev/null || true)"
+	[ -n "$wpdir" ] || wpdir="$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/lumen/lumen-wallpaper-dir" 2>/dev/null || true)"
 	[ -n "$wpdir" ] || wpdir="$HOME/Pictures/Wallpapers"
 	mkdir -p "$wpdir"
 	case "$(printf '%s' "$base" | tr '[:upper:]' '[:lower:]')" in
