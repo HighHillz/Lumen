@@ -253,6 +253,9 @@ palette_update() {
   mkdir -p "$(dirname "$STATE")"
   printf '%s\n' "$pic" >"$STATE"
 
+  lock_wall="${XDG_STATE_HOME:-$HOME/.local/state}/lumen/hyprlock-wallpaper"
+  ln -sfn "$show" "$lock_wall"
+
   pmode=$(jq -r '.paletteMode // "static"' "$flags_file" 2>/dev/null || echo static)
 
   mkdir -p "$(dirname "$WLOG")"
@@ -264,6 +267,10 @@ palette_update() {
     python3 "$(dirname "$0")/wallcolors.py" --hue "$mh" "$md" >>"$WLOG" 2>&1 || true
   else
     python3 "$(dirname "$0")/wallcolors.py" "$show" >>"$WLOG" 2>&1 || true
+
+    for fish_pid in $(pgrep -u "$USER" -x fish 2>/dev/null); do
+        kill -USR1 "$fish_pid" 2>/dev/null || true
+    done
   fi
 
   spicetify refresh >/dev/null 2>&1 || true
