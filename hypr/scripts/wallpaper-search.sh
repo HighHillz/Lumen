@@ -54,12 +54,45 @@ except Exception:
 PYEOF
 }
 
+search_wallhaven() {
+    local query="${1:-}"
+    [ -n "$query" ] || { printf '[]\n'; return 0; }
+
+    local enc
+    enc=$(jq -rn --arg q "$query" '$q|@uri') || { printf '[]\n'; return 0; }
+
+    local raw
+    raw=$(curl -s --max-time 15 \
+        "https://wallhaven.cc/api/v1/search?q=${enc}&categories=111&purity=100&sorting=relevance&page=1" \
+        -A "$UA" \
+        -H "Accept: application/json")
+
+    [ -n "$raw" ] || { printf '[]\n'; return 0; }
+
+    printf '%s' "$raw" | jq -c '
+        (.data // [])
+        | map({
+            image: .path,
+            thumb: (.thumbs.large // .path),
+            w: (.dimension_x // 0),
+            h: (.dimension_y // 0)
+        })
+        | map(select(.image != null and .image != ""))
+        | .[0:60]
+    ' 2>/dev/null || printf '[]\n'
+}
+
 search() {
     local query="${1:-}" kind="${2:-all}"
     [ -n "$query" ] || { printf '[]\n'; return 0; }
 
     if [ "$kind" = "motion" ]; then
         search_moewalls "$query"
+        return 0
+    fi
+
+    if [ "$kind" = "still" ] || [ "$kind" = "all" ]; then
+        search_wallhaven "$query"
         return 0
     fi
 
@@ -72,7 +105,7 @@ search() {
     enc=$(jq -rn --arg q "$q" '$q|@uri') || { printf '[]\n'; return 0; }
 
     vqd=$(curl -s --max-time 10 "https://duckduckgo.com/?q=${enc}&iax=images&ia=images" -A "$UA" \
-        | grep -oP 'vqd=\\?"?\K[0-9-]+' | head -1)
+        | grep -oP 'vqd=\K[0-9-]+' | head -1)
     [ -n "$vqd" ] || { printf '[]\n'; return 0; }
 
     raw=$(curl -s --max-time 10 \
@@ -111,7 +144,8 @@ download() {
     case "$url" in
         https://go.moewalls.com/download.php*)
             fn=$(curl -fsI --max-time 20 -A "$UA" -e "https://moewalls.com/" "$url" \
-                | grep -oiP 'filename=\K[^"\r\n;]+' | head -1 | tr -d '/\\')
+                | sed -n 's/^[Cc]ontent-[Dd]isposition:.*filename="\([^"]*\)".*/\1/p' \
+                | head -1 | tr -d '/\\')
             [ -n "$fn" ] || fn="moewalls-$(date +%s).mp4"
             out="$dir/$fn"
             curl -fsL --max-time 600 -A "$UA" -e "https://moewalls.com/" -o "$out" "$url" || exit 1

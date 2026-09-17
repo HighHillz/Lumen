@@ -3,33 +3,33 @@
     "type": "file",
     "source": "/home/aprameyan/.config/fastfetch/lantern.txt",
     "color": {
-      "1": "38;2;116;241;224",
-      "2": "38;2;203;235;231",
-      "3": "38;2;25;66;60",
-      "4": "38;2;29;76;70",
-      "5": "38;2;181;191;190",
-      "6": "38;2;69;181;166",
-      "7": "38;2;247;248;248"
+      "1": "38;2;121;116;241",
+      "2": "38;2;205;203;235",
+      "3": "38;2;26;24;64",
+      "4": "38;2;30;28;74",
+      "5": "38;2;182;181;191",
+      "6": "38;2;73;68;180",
+      "7": "38;2;247;247;248"
     },
     "padding": { "top": 1, "left": 2, "right": 6 }
   },
   "display": {
     "separator": "  ",
     "color": {
-      "keys": "38;2;116;241;224"
+      "keys": "38;2;121;116;241"
     },
     "key": { "width": 12 }
   },
   "modules": [
     "break",
-    { "type": "custom", "format": "\u001b[38;2;131;145;143m── system ──────────────" },
+    { "type": "custom", "format": "\u001b[38;2;131;131;145m── system ──────────────" },
     { "type": "os", "key": "  os", "format": "{pretty-name}" },
     { "type": "kernel", "key": "  kernel", "format": "{release}" },
     { "type": "uptime", "key": "  up" },
     { "type": "disk", "key": "  storage", "format": "{size-used} / {size-total} [{size-percentage}]" },
     { "type": "packages", "key": " 󰏖 pkgs", "format": "{all}" },
     "break",
-    { "type": "custom", "format": "\u001b[38;2;131;145;143m── rice ─────l───────────" },
+    { "type": "custom", "format": "\u001b[38;2;131;131;145m── rice ─────l───────────" },
     { "type": "wm", "key": "  wm", "format": "{pretty-name}" },
     { "type": "shell", "key": "  shell", "format": "{exe-name}" },
     { "type": "terminal", "key": "  term", "format": "{pretty-name}" },

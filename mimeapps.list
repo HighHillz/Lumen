@@ -24,6 +24,7 @@ application/xml=codium.desktop
 inode/directory=org.gnome.Nautilus.desktop
 text/x-shellscript=codium.desktop
 text/x-java=codium.desktop
+image/gif=org.gnome.Loupe.desktop
 
 [Added Associations]
 application/schema+json=codium.desktop;
@@ -49,3 +50,4 @@ text/x-c++hdr=codium.desktop;
 application/xml=codium.desktop;
 text/x-shellscript=codium.desktop;
 text/x-java=codium.desktop;
+image/gif=org.gnome.Loupe.desktop;
