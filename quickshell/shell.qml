@@ -280,16 +280,38 @@ ShellRoot {
                         continue;
 
                     var ws = mons[i].activeWorkspace;
-                    if (!ws)
-                        return false;
+                    if (ws) {
+                        var windows = ws.toplevels.values;
 
-                    var windows = ws.toplevels.values;
+                        for (var j = 0; j < windows.length; j++) {
+                            var o = windows[j].lastIpcObject;
 
-                    for (var j = 0; j < windows.length; j++) {
-                        var o = windows[j].lastIpcObject;
+                            if (o && o.fullscreen === 2)
+                                return true;
+                        }
+                    }
 
-                        if (o && o.fullscreen === 2)
-                            return true;
+                    var mo = mons[i].lastIpcObject;
+                    var sw = (mo && mo.specialWorkspace) ? mo.specialWorkspace.name : "";
+
+                    if (sw && sw.indexOf("special:") === 0) {
+                        var wss = Hyprland.workspaces.values;
+
+                        for (var k = 0; k < wss.length; k++) {
+                            if (!wss[k] || wss[k].name !== sw)
+                                continue;
+
+                            var specialWindows = wss[k].toplevels.values;
+
+                            for (var l = 0; l < specialWindows.length; l++) {
+                                var so = specialWindows[l].lastIpcObject;
+
+                                if (so && so.fullscreen === 2)
+                                    return true;
+                            }
+
+                            break;
+                        }
                     }
 
                     return false;
