@@ -48,6 +48,15 @@ PillSurface {
     property int editIndex: -1
 
     readonly property string appimageScript: Quickshell.env("HOME") + "/.config/hypr/scripts/app-install.sh"
+    readonly property string guardScript: Quickshell.env("HOME") + "/.config/hypr/scripts/launch-guard.sh"
+
+    function launch(entry) {
+        if (!entry.command || entry.command.length === 0) {
+            entry.execute();
+            return;
+        }
+        Quickshell.execDetached(["bash", root.guardScript, entry.name, entry.icon || "", entry.workingDirectory || ""].concat(entry.command));
+    }
 
     function appimageSlug(entry) {
         return entry && entry.id && entry.id.indexOf("lumen-") === 0 ? entry.id.substring(8) : "";
@@ -126,7 +135,7 @@ PillSurface {
                 root.usage[entry.id] = (root.usage[entry.id] || 0) + 1;
                 usageStore.setText(JSON.stringify(root.usage));
             }
-            entry.execute();
+            root.launch(entry);
         }
         root.requestClose();
     }

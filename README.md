@@ -57,8 +57,36 @@ I use `matugen` to generate colors from wallpapers.
 The generated palette is used throughout the desktop, including the shell,
 terminal and other parts of the configuration.
 
+<<<<<<< HEAD
 The Quickshell interface also has its own manually tuned visual styling,
 built around warm vermilion and muted cream tones.
+=======
+`install.sh` is a thin bootstrap: it detects your distro (Arch, Debian, Fedora,
+openSUSE or Gentoo), makes sure git and python3 are there, clones the rice into
+`~/.local/share/ricelin`, then hands off to the guided Python installer. That part
+walks you through a short wizard, picks the right package names for your distro,
+pulls the deps and copies the configs into `~/.config`, backing up anything it
+replaces. The monitor layout and GPU env are swapped for portable defaults so it
+boots on any hardware; my own layout is kept next to it as `monitors.lua.example`.
+Then start `Hyprland` from a TTY.
+
+Skip the wizard with flags, passed straight through the pipe:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Gakuseei/Ricelin/main/install.sh | bash -s -- --quickstart
+```
+
+```
+--quickstart  core defaults, no questions
+--full        also install the daily apps (dolphin, keepassxc, zathura, imv, rnote)
+--sddm        also install the torii SDDM login theme
+--no-deps     skip the package step, just deploy the configs
+--dry-run     walk the whole flow and change nothing
+```
+
+Ricelin is a Hyprland shell. On Niri, Sway or anything else only rishot (the
+screenshot tool) makes sense; grab it from [rishot](https://github.com/Gakuseei/rishot)'s own installer.
+>>>>>>> upstream/main
 
 ## Keybinds
 

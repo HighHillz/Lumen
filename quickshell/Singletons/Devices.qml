@@ -17,7 +17,7 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    readonly property string stateFile: (Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")) + "/lumen/nvibrant-value"
+    readonly property string stateFile: (Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")) + "/ricelin/nvibrant-value"
 
     property int vibrance: 40
 
@@ -56,9 +56,16 @@ Singleton {
         saveVibrance(pct);
     }
 
+    /**
+     * nvibrant takes one value per connector slot and ignores extras, so the
+     * same value goes to every slot rather than guessing which ones are lit.
+     */
     function applyVibrance(pct) {
         var raw = Math.round(Math.max(0, Math.min(100, pct)) * 1023 / 100);
-        Quickshell.execDetached(["nvibrant", String(raw), "0", String(raw)]);
+        var args = ["nvibrant"];
+        for (var i = 0; i < 16; i++)
+            args.push(String(raw));
+        Quickshell.execDetached(args);
     }
 
     function saveVibrance(pct) {
@@ -107,7 +114,7 @@ Singleton {
                 for (var i = 0; i < blocks.length; i++) {
                     var bus = /I2C bus:\s+\/dev\/i2c-(\d+)/.exec(blocks[i]);
                     var conn = /DRM connector:\s+card\d+-(\S+)/.exec(blocks[i]);
-                    if (bus && (!conn || conn[1].indexOf("eDP-") !== 0))
+                    if (bus)
                         mons.push({ bus: bus[1], label: conn ? conn[1] : "BUS " + bus[1] });
                 }
                 root.ddcMonitors = mons;
