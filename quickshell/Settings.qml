@@ -4,7 +4,7 @@ import QtQuick
 import "Singletons"
 
 /**
- * 設 SETTINGS index: a short list of categories. Each row carries its kanji,
+ * SETTINGS index: a short list of categories. Each row carries its icon,
  * name and caption, and morphs the pill into that category's sub-surface.
  * Arrow keys move the focused row with the glowing seam and Return opens it.
  */
@@ -33,7 +33,6 @@ SettingsSurface {
 
         SettingsHeader {
             s: root.s
-            glyph: "設"
             title: "SETTINGS"
         }
 
@@ -43,7 +42,7 @@ SettingsSurface {
             captionOnFocus: true
             icon: "sparkles"
             name: "Appearance"
-            sub: "Clock, glyphs, accent palette"
+            sub: "Clock, accent palette"
 
             GlyphIcon {
                 width: 16 * root.s

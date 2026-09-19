@@ -13,7 +13,7 @@ import "Singletons"
  * row, day cells sized to exactly the rows the month needs). Today keeps its warm
  * frame and the Ame ring; a day that holds a stored event marks its number warm
  * with a small ember dot. To the left, when Weather.ready, a slim panel shows the
- * current temperature, the condition kanji and city, and the next few hours. To
+ * current temperature, the condition icon and city, and the next few hours. To
  * the right, selecting a day slides open an editor listing that day's events with
  * a delete tap and an add form (start, end, title).
  *
@@ -115,8 +115,8 @@ PillSurface {
     /**
      * Ame is the focus cursor: it rings the picked day, or today when this month
      * is in view with nothing picked. Browsing another month with nothing picked
-     * leaves no focus, so the bead parks as a soul ember on the 暦 header glyph
-     * (the calendar's lantern, mirroring Sysmon) rather than floating over a
+     * leaves no focus, so the bead parks as a soul ember beside the month label
+     * rather than floating over a
      * random date cell — which is what read as Ame jumping somewhere random.
      */
     readonly property bool selectedInView: selectedDate.length > 0
@@ -134,8 +134,6 @@ PillSurface {
     readonly property point soulPoint: {
         void width;
         void height;
-        if (Flags.showGlyphs)
-            return calGlyph.mapToItem(root, calGlyph.width / 2, -3 * s);
         return monthLabel.mapToItem(root, -8 * s, monthLabel.height / 2);
     }
 
@@ -478,16 +476,6 @@ PillSurface {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 8 * root.s
 
-                Text {
-                    id: calGlyph
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: Flags.showGlyphs
-                    text: "暦"
-                    color: Theme.cream
-                    font.family: Theme.fontJp
-                    font.weight: Font.Medium
-                    font.pixelSize: 16 * root.s
-                }
                 Text {
                     id: monthLabel
                     anchors.verticalCenter: parent.verticalCenter

@@ -6,7 +6,7 @@ import "lib/keychord.js" as Chord
 import "Singletons"
 
 /**
- * 場 WORKSPACES hub: a glance at Hyprland's special spaces and the keys that
+ * WORKSPACES hub: a glance at Hyprland's special spaces and the keys that
  * summon them. The three built-in rows (Stash, Private, Minimized) sit on top;
  * below them every user-defined space from the Spaces store gets its own row with
  * a Super+<key> chip, a chevron into its app manager (SpaceApps) and a remove
@@ -316,15 +316,6 @@ PillSurface {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 8 * root.s
 
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: Flags.showGlyphs
-                    text: "場"
-                    color: Theme.cream
-                    font.family: Theme.fontJp
-                    font.weight: Font.Medium
-                    font.pixelSize: 16 * root.s
-                }
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "WORKSPACES"

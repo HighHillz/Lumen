@@ -6,7 +6,7 @@ import Quickshell.Io
 import "Singletons"
 
 /**
- * 蔵 STASH surface: the window classes that auto-route into the special:stash
+ * STASH surface: the window classes that auto-route into the special:stash
  * space (SUPER+S), read from and written back to
  * ~/.config/hypr/modules/stash-apps.lua. Two views share one surface. The list
  * view shows each stashed class as an app tile, friendly name and faint raw-class
@@ -147,15 +147,6 @@ PillSurface {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 8 * root.s
 
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: Flags.showGlyphs
-                    text: "蔵"
-                    color: Theme.cream
-                    font.family: Theme.fontJp
-                    font.weight: Font.Medium
-                    font.pixelSize: 16 * root.s
-                }
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "STASH"

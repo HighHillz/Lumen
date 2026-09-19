@@ -6,7 +6,7 @@ import Quickshell.Bluetooth
 import "Singletons"
 
 /**
- * 歯 BLUETOOTH surface: kanji header, scan with 25s auto-stop, adapter toggle,
+ * BLUETOOTH surface: scan with 25s auto-stop, adapter toggle,
  * a connected block on top and the nearby list below. Connected rows are
  * taller and carry a full-width battery thread fed by Peripherals (UPower),
  * since BlueZ keeps Battery1 behind Experimental; USB-dongle peripherals with
@@ -225,15 +225,6 @@ PillSurface {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 8 * root.s
 
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                visible: Flags.showGlyphs
-                text: "歯"
-                color: Theme.cream
-                font.family: Theme.fontJp
-                font.weight: Font.Medium
-                font.pixelSize: 16 * root.s
-            }
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "BLUETOOTH"

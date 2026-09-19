@@ -4,8 +4,8 @@ import QtQuick
 import "Singletons"
 
 /**
- * 系 SYSTEM surface: a flat washi card of live machine vitals fed by the Sysmon
- * singleton. The header carries the kanji, label and uptime. Below it sit flame
+ * SYSTEM surface: a flat washi card of live machine vitals fed by the Sysmon
+ * singleton. The header carries the label and uptime. Below it sit flame
  * dials for CPU, GPU and memory load, each a 270deg arc stroked with the mixer's
  * vermLit-to-vermBurn gradient on a thread track and rounded caps, the sweep
  * eased over the value change; the centre shows the value, a unit and a sub line
@@ -31,20 +31,14 @@ PillSurface {
     onActiveChanged: Sysmon.open = active
 
     /**
-     * The soul ember rests with the 系 header kanji: the kanji is the lantern,
-     * the bead its flame, hovering just above the glyph with its wick rising into
-     * it. Anchored to the header rather than the dial row so the ember sits in the
-     * same deliberate spot whether three dials or two are shown (the header never
-     * changes with GPU presence). With glyphs off the kanji is hidden, so the
-     * anchor falls back to the SYSTEM label's left edge, vertically centred on the
-     * header, and never floats. Mapped into surface-local space so the host can
-     * offset it by the surface origin.
+     * The soul ember rests at the SYSTEM label's left edge, vertically centred on
+     * the header, so it sits in the same deliberate spot whether three dials or
+     * two are shown (the header never changes with GPU presence). Mapped into
+     * surface-local space so the host can offset it by the surface origin.
      */
     readonly property point soulPoint: {
         void root.width;
         void root.height;
-        if (Flags.showGlyphs)
-            return kanji.mapToItem(root, kanji.width / 2, -3 * root.s);
         return sysLabel.mapToItem(root, -8 * root.s, sysLabel.height / 2);
     }
 
@@ -184,16 +178,6 @@ PillSurface {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 9 * root.s
 
-                Text {
-                    id: kanji
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: Flags.showGlyphs
-                    text: "系"
-                    color: Theme.cream
-                    font.family: Theme.fontJp
-                    font.weight: Font.Medium
-                    font.pixelSize: 16 * root.s
-                }
                 Text {
                     id: sysLabel
                     anchors.verticalCenter: parent.verticalCenter

@@ -608,18 +608,9 @@ Item {
             soulWsIndex = -1;
         }
     }
-    onHoverSoulGateChanged: if (hoverSoulGate) kanjiFlashAnim.restart()
 
     property string soulTarget: ""
     property int soulWsIndex: -1
-
-    property real kanjiFlash: 0
-
-    SequentialAnimation {
-        id: kanjiFlashAnim
-        NumberAnimation { target: pill; property: "kanjiFlash"; to: 1; duration: 90; easing.type: Easing.OutCubic }
-        NumberAnimation { target: pill; property: "kanjiFlash"; to: 0; duration: 320; easing.type: Easing.OutCubic }
-    }
 
     Behavior on width { NumberAnimation { id: morphAnimW; duration: pill.hoverHop ? Motion.glide : Motion.morph; easing.type: Motion.easeMorph; easing.bezierCurve: Motion.morphCurve } }
     Behavior on height { NumberAnimation { id: morphAnimH; duration: pill.hoverHop ? Motion.glide : Motion.morph; easing.type: Motion.easeMorph; easing.bezierCurve: Motion.morphCurve } }
@@ -735,13 +726,13 @@ Item {
     }
 
     /**
-     * Rest anchor for Ame: the 時 kanji centre. The idle outline condenses into
+     * Rest anchor for Ame: the clock icon centre. The idle outline condenses into
      * the bead here before it moves.
      */
     readonly property point wakePoint: {
         void pill.width;
         void pill.height;
-        return restKanji.mapToItem(pill, restKanji.width / 2, restKanji.height / 2);
+        return restIcon.mapToItem(pill, restIcon.width / 2, restIcon.height / 2);
     }
 
     /**
@@ -1268,41 +1259,18 @@ Item {
             anchors.centerIn: parent
             spacing: 9 * pill.s
             Item {
-                id: restKanji
+                id: restIcon
                 visible: pill.specialView === ""
                 anchors.verticalCenter: parent.verticalCenter
-                width: kanjiFill.implicitWidth
-                height: kanjiFill.implicitHeight
+                width: 17 * pill.s
+                height: 17 * pill.s
 
-                /** Audio leaving the speakers flips the clock glyph over to the live waveform. */
+                /** Audio leaving the speakers flips the clock icon over to the live waveform. */
                 readonly property bool barsOn: Flags.musicViz && Cava.active
-
-                Text {
-                    anchors.fill: parent
-                    opacity: (Flags.showGlyphs && !restKanji.barsOn) ? 1 : 0
-                    text: kanjiFill.text
-                    color: "transparent"
-                    font: kanjiFill.font
-                    style: Text.Outline
-                    styleColor: Qt.alpha(Theme.vermLit,
-                        Math.min(1, (pill.mode === "rest" || !pill.hoverSoulGate ? 0.5 : 0) + pill.kanjiFlash))
-                    Behavior on opacity { NumberAnimation { duration: Motion.standard; easing.type: Motion.easeStandard } }
-                }
-
-                Text {
-                    id: kanjiFill
-                    opacity: (Flags.showGlyphs && !restKanji.barsOn) ? 1 : 0
-                    text: "時"
-                    color: Theme.cream
-                    font.family: Theme.fontJp
-                    font.weight: Font.Medium
-                    font.pixelSize: 15 * pill.s
-                    Behavior on opacity { NumberAnimation { duration: Motion.standard; easing.type: Motion.easeStandard } }
-                }
 
                 GlyphIcon {
                     anchors.centerIn: parent
-                    opacity: (!Flags.showGlyphs && !restKanji.barsOn) ? 1 : 0
+                    opacity: restIcon.barsOn ? 0 : 1
                     width: 17 * pill.s
                     height: 17 * pill.s
                     name: "clock"
@@ -1314,10 +1282,10 @@ Item {
                 MusicBars {
                     id: musicBars
                     anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottom: kanjiFill.baseline
+                    anchors.verticalCenter: parent.verticalCenter
                     s: pill.s
-                    opacity: restKanji.barsOn ? 1 : 0
-                    scale: restKanji.barsOn ? 1 : 0.7
+                    opacity: restIcon.barsOn ? 1 : 0
+                    scale: restIcon.barsOn ? 1 : 0.7
                     Behavior on opacity { NumberAnimation { duration: Motion.standard; easing.type: Motion.easeStandard } }
                     Behavior on scale { NumberAnimation { duration: Motion.standard; easing.type: Motion.easeStandard } }
                 }
