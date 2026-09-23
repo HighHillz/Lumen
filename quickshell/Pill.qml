@@ -404,14 +404,12 @@ Item {
     /**
      * Step the open surface back one level when its header bar is clicked: a
      * settings sub-surface returns to the index, the font picker to appearance,
-     * a keybinds form to its list, and any other surface dismisses to the hover
+     * a keybinds form or sub-page to its list, and any other surface dismisses to the hover
      * pill. Empty space in the body never triggers this.
      */
     function surfaceBack() {
         if (pill.keybindsOpen) {
-            if (ldKeybinds.item && ldKeybinds.item.formOpen)
-                ldKeybinds.item.closeForm();
-            else
+            if (!ldKeybinds.item || !ldKeybinds.item.back())
                 pill.requestSurface("settings");
             return;
         }
@@ -433,11 +431,14 @@ Item {
                 pill.requestSurface("workspaces");
             return;
         }
-        if (pill.workspacesOpen && ldWorkspaces.item && ldWorkspaces.item.formOpen) {
-            ldWorkspaces.item.closeForm();
+        if (pill.workspacesOpen) {
+            if (ldWorkspaces.item && ldWorkspaces.item.formOpen)
+                ldWorkspaces.item.closeForm();
+            else
+                pill.requestSurface("keybinds");
             return;
         }
-        if (pill.appearanceOpen || pill.updatesOpen || pill.displayOpen || pill.inputOpen || pill.lookOpen || pill.animationOpen || pill.workspacesOpen) {
+        if (pill.appearanceOpen || pill.updatesOpen || pill.displayOpen || pill.inputOpen || pill.lookOpen || pill.animationOpen) {
             pill.requestSurface("settings");
             return;
         }
@@ -445,15 +446,12 @@ Item {
     }
 
     /**
-     * Pop the open keybinds editor form back to the bind list. Returns true when a
-     * form was open and dismissed, false otherwise so Escape closes the surface.
+     * Step the open keybinds surface back one level (a form to its list, the
+     * apps page to the main page). Returns true when it moved, false at the top
+     * so Escape closes the surface.
      */
     function keybindsBack() {
-        if (pill.keybindsOpen && ldKeybinds.item && ldKeybinds.item.formOpen) {
-            ldKeybinds.item.closeForm();
-            return true;
-        }
-        return false;
+        return pill.keybindsOpen && ldKeybinds.item !== null && ldKeybinds.item.back();
     }
 
     /**
@@ -1172,13 +1170,12 @@ Item {
                     elide: Text.ElideRight
                     width: Math.min(implicitWidth, 220 * pill.s)
                 }
-                Text {
+                Marquee {
                     text: Players.artist
                     color: Theme.dim
-                    font.family: Theme.font
-                    font.pixelSize: 10.5 * pill.s
-                    elide: Text.ElideRight
+                    pixelSize: 10.5 * pill.s
                     width: Math.min(implicitWidth, 220 * pill.s)
+                    active: pill.mode === "game"
                     visible: text.length > 0
                 }
             }

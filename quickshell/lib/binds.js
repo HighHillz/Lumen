@@ -88,6 +88,63 @@ function nameComment(raw, closeIndex) {
     return m ? m[1].trim() : "";
 }
 
+/**
+ * Maps each line to the title of the `-- === Title === ` banner section it
+ * falls under (the three-line comment banners that already divide binds.lua),
+ * or null before the first one. Only a real banner (dash line, title, dash
+ * line) opens a new section, so an ordinary standalone comment can't be
+ * mistaken for one.
+ */
+function sectionTitles(lines) {
+    var out = new Array(lines.length).fill(null);
+    var current = null;
+    var dash = /^--\s*=+\s*$/;
+    for (var i = 0; i < lines.length; i++) {
+        if (dash.test(lines[i].trim()) && i + 2 < lines.length && dash.test(lines[i + 2].trim())) {
+            var m = lines[i + 1].trim().match(/^--\s*(.+?)\s*$/);
+            if (m) current = m[1];
+        }
+        out[i] = current;
+    }
+    return out;
+}
+
+/**
+ * binds.lua's own section banners collapsed onto the groups the Keybinds
+ * surface displays. Unrecognized sections (a future banner this map hasn't been
+ * taught yet) fall back to "Shortcuts" rather than disappearing.
+ */
+var SECTION_CATEGORY = {
+    "Window Management": "Shortcuts",
+    "Quickshell — Pill Surfaces": "Shortcuts",
+    "Applications": "Apps",
+    "Workspaces": "Desktops",
+    "Screenshots & Color Tools": "Shortcuts",
+    "Hardware Controls": "Shortcuts",
+    "Touchpad": "Shortcuts",
+    "Media Controls": "Shortcuts"
+};
+
+/** The binds.lua banner a category's new binds are added under. */
+var CATEGORY_SECTION = {
+    "Apps": "Applications",
+    "Desktops": "Workspaces"
+};
+
+/**
+ * Special-workspace toggles are grouped on their own whatever banner they sit
+ * under, since the Workspaces surface owns those keys rather than the list.
+ */
+function isSpecialAction(action) {
+    return /toggle_special\s*\(|special-toggle\.sh/.test(action);
+}
+
+function categoryOf(section, action) {
+    if (isSpecialAction(action))
+        return "Special";
+    return SECTION_CATEGORY[section] || "Shortcuts";
+}
+
 function isExecAction(action) {
     return /exec_cmd\s*\(/.test(action);
 }
@@ -152,10 +209,14 @@ function parseLine(raw, lineIndex, modValue) {
 function parse(luaText) {
     var modValue = readMod(luaText);
     var lines = luaText.split("\n");
+    var sections = sectionTitles(lines);
     var out = [];
     for (var i = 0; i < lines.length; i++) {
         var entry = parseLine(lines[i], i, modValue);
-        if (entry) out.push(entry);
+        if (entry) {
+            entry.category = categoryOf(sections[i], entry.action);
+            out.push(entry);
+        }
     }
     return out;
 }
@@ -312,13 +373,33 @@ function argRange(raw, argIndex) {
 }
 
 /**
+ * Index just past the last non-empty line of the banner section titled
+ * `title`, i.e. before the blank gap and the next banner. -1 when there is no
+ * such section.
+ */
+function sectionEnd(lines, title) {
+    if (!title)
+        return -1;
+    var sections = sectionTitles(lines);
+    var start = sections.indexOf(title);
+    if (start < 0)
+        return -1;
+    var end = start + 3;
+    for (var i = start + 3; i < lines.length && sections[i] === title; i++)
+        if (lines[i].trim().length)
+            end = i + 1;
+    return end;
+}
+
+/**
  * Appends a new exec bind. `combo` becomes a `mod .. " + X"` or literal first
  * arg via comboExpr; `cmd` is escaped into an `exec_cmd("...")` dispatch; a
- * non-empty `name` is added as a trailing `-- name` comment. The line is
- * inserted after the last non-empty line of the file. Returns { text, ok,
- * error }.
+ * non-empty `name` is added as a trailing `-- name` comment. With a `category`
+ * whose banner is found, the line goes after that section's last non-empty
+ * line; otherwise after the last non-empty line of the file. Returns { text,
+ * ok, error }.
  */
-function add(luaText, combo, cmd, name) {
+function add(luaText, combo, cmd, name, category) {
     if (!combo || !combo.length)
         return { text: luaText, ok: false, error: "empty combo" };
     if (!cmd || !cmd.length)
@@ -332,10 +413,13 @@ function add(luaText, combo, cmd, name) {
     if (name && name.length)
         line += " -- " + name;
 
-    var insertAt = lines.length;
-    for (var i = lines.length - 1; i >= 0; i--) {
-        if (lines[i].trim().length) { insertAt = i + 1; break; }
-        insertAt = i;
+    var insertAt = sectionEnd(lines, CATEGORY_SECTION[category]);
+    if (insertAt < 0) {
+        insertAt = lines.length;
+        for (var i = lines.length - 1; i >= 0; i--) {
+            if (lines[i].trim().length) { insertAt = i + 1; break; }
+            insertAt = i;
+        }
     }
     lines.splice(insertAt, 0, line);
     return { text: lines.join("\n"), ok: true, error: "" };

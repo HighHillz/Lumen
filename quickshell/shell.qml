@@ -208,6 +208,9 @@ ShellRoot {
         /** Opens any surface by name, settings sub-pages included; dev and scripting door. */
         function page(mon: string, name: string): void { root.toggleSurface(mon, name); }
 
+        /** A feature toggled outside the shell (the touchpad key in binds.lua); flashes its notice. */
+        function toggled(name: string, state: string): void { LockKeys.report(name, state === "on"); }
+
         /**
          * The two halves of the SUPER+M minimize toggle, driven by the
          * minimize-toggle script which has already read the focused window. A

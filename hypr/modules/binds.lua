@@ -42,14 +42,8 @@ hl.bind(mod .. " + W", hl.dsp.exec_cmd("firefox")) -- Browser
 hl.bind(mod .. " + L", hl.dsp.exec_cmd("hyprlock")) -- Lockscreen
 hl.bind(mod .. " + E", hl.dsp.exec_cmd("nautilus -w")) -- File manager
 hl.bind("CTRL + SHIFT + escape", hl.dsp.exec_cmd("resources")) -- Task Manager
-hl.bind(
-	mod .. " + N",
-	hl.dsp.exec_cmd("obsidian --enable-platform=WaylandWindowDecorations,EnableOzonePlatform --ozone-platform=wayland")
-) -- Notes
-hl.bind(
-	mod .. " + M",
-	hl.dsp.exec_cmd("spotify --ozone-platform=wayland --enable-features=UseOzonePlatform,WaylandWindowDecorations")
-) -- Music
+hl.bind(mod .. " + N", hl.dsp.exec_cmd("obsidian --enable-platform=WaylandWindowDecorations,EnableOzonePlatform --ozone-platform=wayland")) -- Notes
+hl.bind(mod .. " + M", hl.dsp.exec_cmd("spotify --ozone-platform=wayland --enable-features=UseOzonePlatform,WaylandWindowDecorations")) -- Music
 
 -- ============================================================================
 -- Workspaces
@@ -88,8 +82,6 @@ hl.bind(mod .. " + mouse_down", hl.dsp.focus({ workspace = "r+1" }))
 -- Special workspaces
 hl.bind(mod .. " + P", hl.dsp.workspace.toggle_special("private"))
 hl.bind(mod .. " + SHIFT + P", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.config/hypr/scripts/special-toggle.sh private"))
-
--- Stash workspace is currently disabled
 hl.bind(mod .. " + S", hl.dsp.workspace.toggle_special("stash"))
 hl.bind(mod .. " + SHIFT + S", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.config/hypr/scripts/special-toggle.sh stash"))
 
@@ -121,6 +113,23 @@ hl.bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ to
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl set 5%+"), { locked = true, repeating = true })
 
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 5%-"), { locked = true, repeating = true })
+
+-- ============================================================================
+-- Touchpad
+-- ============================================================================
+
+local touchpadName = "ascf1201:00-2808:0231-touchpad"
+local touchpadEnabled = true
+
+local function setTouchpad(enabled)
+	touchpadEnabled = enabled
+	hl.device({ name = touchpadName, enabled = touchpadEnabled })
+	hl.exec_cmd("qs ipc call pill toggled Touchpad " .. (enabled and "on" or "off")) -- flash the pill notice
+end
+
+hl.bind("XF86TouchpadToggle", function() setTouchpad(not touchpadEnabled) end, { locked = true }) -- Toggle touchpad
+hl.bind("XF86TouchpadOn", function() setTouchpad(true) end, { locked = true }) -- Enable touchpad
+hl.bind("XF86TouchpadOff", function() setTouchpad(false) end, { locked = true }) -- Disable touchpad
 
 -- ============================================================================
 -- Media Controls

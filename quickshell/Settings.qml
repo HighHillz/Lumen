@@ -20,7 +20,6 @@ SettingsSurface {
         { item: inputRow, kind: "nav", surface: "input" },
         { item: animationRow, kind: "nav", surface: "animation" },
         { item: keybindsRow, kind: "nav", surface: "keybinds" },
-        { item: workspacesRow, kind: "nav", surface: "workspaces" },
         { item: updatesRow, kind: "nav", surface: "updates" }
     ]
 
@@ -127,30 +126,13 @@ SettingsSurface {
             captionOnFocus: true
             icon: "keyboard"
             name: "Keybinds"
-            sub: "Rebind, add, set commands"
+            sub: "Rebind, add, set commands, workspaces"
 
             GlyphIcon {
                 width: 16 * root.s
                 height: 16 * root.s
                 name: "chevron-right"
                 color: root.focusRowItem === keybindsRow ? Theme.cream : Theme.iconDim
-                stroke: 2.2
-            }
-        }
-
-        SettingsRow {
-            id: workspacesRow
-            surface: root
-            captionOnFocus: true
-            icon: "layers"
-            name: "Workspaces"
-            sub: "Special spaces and their keys"
-
-            GlyphIcon {
-                width: 16 * root.s
-                height: 16 * root.s
-                name: "chevron-right"
-                color: root.focusRowItem === workspacesRow ? Theme.cream : Theme.iconDim
                 stroke: 2.2
             }
         }

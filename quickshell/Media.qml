@@ -9,7 +9,7 @@ import "Singletons"
  * Now-playing card. Album art bleeds edge-to-edge on the left, faded into the
  * card; a blurred copy glows through a near-opaque warm wash behind everything.
  * Right of the cover: title, artist, a dim source/time line, the play/pause
- * seal flanked by previous/next skips. Playback runs as a brush stroke along the
+ * seal flanked by previous/next skips. Playback runs as a straight stroke along the
  * bottom, its painted head the dock for the pill's soul bead. All now-playing
  * data comes from [[Players]]; when two or more players run, the source token
  * glows into a bubble that opens a picker.
@@ -549,7 +549,7 @@ PillSurface {
         onVisibleChanged: if (visible) requestPaint()
 
         function waveY(u) {
-            return height / 2 - 2.6 * Math.sin(3 * Math.PI * u) * Math.exp(-2.5 * u) * root.s;
+            return height / 2;
         }
 
         onPaint: {

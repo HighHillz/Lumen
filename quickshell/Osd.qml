@@ -28,7 +28,6 @@ Item {
     readonly property bool subjectHas: subject !== null
     readonly property bool subjectPlaying: subjectHas && subject.isPlaying
     readonly property string subjectTitle: subjectHas ? Players.refineTitle(subject, subject.trackTitle || Players.labelOf(subject)) : ""
-    readonly property string subjectArtist: subjectHas ? Theme.joinArtists(subject.trackArtists, subject.trackArtist) : ""
     readonly property string subjectIcon: subjectHas ? Players.appIconFor(subject) : ""
 
     /** Subject art, live so a cover that lands a beat after the title still resolves; the key forces a reload when a browser reuses one file path. */
@@ -49,8 +48,13 @@ Item {
     readonly property real volume: sink && sink.audio ? Math.max(0, Math.min(1, sink.audio.volume)) : 0
 
     readonly property real desiredW: kind === "workspace" ? Math.max(120 * s, wsIndicator.implicitWidth + 40 * s)
+        : kind === "toggle" ? toggleContent.implicitWidth + 36 * s
         : (kind === "track" ? 344 * s : (kind === "record" ? 256 * s : 248 * s))
-    readonly property real desiredH: kind === "track" ? 64 * s : 44 * s
+    /** A toggle notice keeps the resting pill's height and only grows sideways to fit its line. */
+    readonly property real desiredH: kind === "track" ? 64 * s : (kind === "toggle" ? 38 * s : 44 * s)
+
+    property string toggleName: ""
+    property bool toggleOn: false
 
     /**
      * Active workspace name on this monitor. Any switch (Super+arrow,
@@ -206,6 +210,15 @@ Item {
         }
     }
 
+    Connections {
+        target: LockKeys
+        function onToggled(name, on) {
+            root.toggleName = name;
+            root.toggleOn = on;
+            root.flash("toggle");
+        }
+    }
+
     Item {
         id: volRow
         anchors.fill: parent
@@ -354,17 +367,6 @@ Item {
                 font.weight: Font.DemiBold
                 maximumLineCount: 1
                 elide: Text.ElideRight
-            }
-
-            Text {
-                width: parent.width
-                text: root.subjectArtist
-                color: Theme.dim
-                font.family: Theme.font
-                font.pixelSize: 11 * root.s
-                maximumLineCount: 1
-                elide: Text.ElideRight
-                visible: text.length > 0
             }
         }
     }
@@ -518,6 +520,38 @@ Item {
             s: root.s
             gap: 8 * root.s
             enabled: false
+        }
+    }
+
+    Item {
+        id: toggleRow
+        anchors.fill: parent
+        opacity: root.kind === "toggle" ? 1 : 0
+        visible: opacity > 0.01
+        Behavior on opacity { NumberAnimation { duration: 150 } }
+
+        Row {
+            id: toggleContent
+            anchors.centerIn: parent
+            spacing: 9 * root.s
+
+            GlyphIcon {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 15 * root.s
+                height: 15 * root.s
+                name: root.toggleName === "Touchpad" ? "touchpad" : (root.toggleName === "Caps Lock" ? "caps" : "keyboard")
+                color: root.toggleOn ? Theme.vermLit : Theme.iconDim
+                stroke: 1.7
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.toggleName + (root.toggleOn ? " enabled" : " disabled")
+                color: root.toggleOn ? Theme.cream : Theme.subtle
+                font.family: Theme.font
+                font.pixelSize: 12 * root.s
+                font.weight: Font.Medium
+            }
         }
     }
 

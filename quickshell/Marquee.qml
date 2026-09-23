@@ -18,6 +18,7 @@ Item {
 
     property real scrollX: 0
 
+    implicitWidth: label.implicitWidth
     implicitHeight: label.implicitHeight
     clip: true
 

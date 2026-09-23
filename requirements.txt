@@ -1,0 +1,98 @@
+# Lumen — packages needed to run this setup as intended (Arch Linux)
+#
+# Install everything, official repos and AUR, in one go:
+#
+#   paru -S --needed $(sed 's/#.*//' requirements.txt)
+#
+# Packages marked (AUR) aren't in the official repos, so they need an AUR helper
+# such as paru. Packages marked (optional) only power one feature; the setup
+# still runs without them, and the comment says what stops working.
+#
+# After installing, enable the services listed at the bottom of this file.
+
+# ── Compositor and shell ──────────────────────────────────────────────────────
+hyprland                    # Wayland compositor (0.55+ for the Lua config)
+quickshell                  # Draws the pill and every surface
+qt6-multimedia-ffmpeg       # QtMultimedia; shell.qml fails to load without it (Wallpaper.qml)
+xdg-desktop-portal-hyprland # Screen sharing and the portal for screen recording
+xdg-desktop-portal-gtk      # File pickers for GTK apps
+
+# ── Hypr tools ────────────────────────────────────────────────────────────────
+hyprlock                    # Lock screen (Super+L, and at login)
+hypridle                    # Idle screen-off, lock and suspend (reads hypr/hypridle.conf)
+hyprsunset                  # Night light
+hyprpicker                  # Color picker (Super+Shift+C)
+hyprshot                    # Screenshots (Print)
+
+# ── Wallpaper and theming ─────────────────────────────────────────────────────
+awww                        # Wallpaper daemon
+mpvpaper                    # (AUR, optional) video wallpapers
+imagemagick                 # Wallpaper and clipboard thumbnails
+ffmpeg                      # Video wallpaper frames, previews, recording thumbnails
+python                      # wallcolors.py (wallpaper palette) and the update engine
+
+# ── Clipboard and typing ──────────────────────────────────────────────────────
+cliphist                    # Clipboard history (Super+V)
+wl-clipboard                # wl-copy / wl-paste
+wtype                       # Emoji picker types the chosen emoji
+
+# ── Audio and media ───────────────────────────────────────────────────────────
+pipewire
+pipewire-pulse
+wireplumber                 # wpctl, used by the volume and mic-mute keys
+cava                        # Music visualizer (Settings → Appearance). Without it the toggle
+                            # silently does nothing; run `lumen restart` after installing
+
+# ── Hardware controls ─────────────────────────────────────────────────────────
+brightnessctl               # Laptop backlight (brightness keys and the Mixer fader)
+ddcutil                     # (optional) brightness of external monitors over DDC/CI
+networkmanager              # Wi-Fi surface (nmcli)
+bluez                       # Bluetooth stack
+bluez-utils                 # bluetoothctl, used by the Bluetooth surface
+upower                      # Battery surface and low-battery warnings
+nvidia-utils                # (optional) GPU stats on NVIDIA machines (nvidia-smi)
+
+# ── Screen recording ──────────────────────────────────────────────────────────
+gpu-screen-recorder         # Recorder backend (Super+R)
+slurp                       # Region selection for recordings
+kdialog                     # (optional) folder picker for the recordings folder; zenity also works
+
+# ── Utilities the shell and scripts call ──────────────────────────────────────
+jq                          # JSON parsing in scripts
+curl                        # Weather, wallpaper search and previews
+git                         # lumen CLI and the update engine
+libnotify                   # notify-send toasts
+glib2                       # gio (wallpaper folder handling)
+xdg-utils                   # xdg-open
+desktop-file-utils          # Registers installed apps and AppImages in the launcher
+xorg-xrandr                 # Sets the primary display for XWayland apps
+flatpak                     # (optional) app installs from the launcher
+
+# ── Fonts, cursor, Qt theme ───────────────────────────────────────────────────
+inter-font                  # UI typeface
+ttf-jetbrains-mono-nerd     # Terminal font and icon glyphs
+noto-fonts-emoji            # Emoji picker
+noto-fonts-cjk              # CJK glyphs
+bibata-cursor-theme-bin     # (AUR) cursor; hypr/modules/env.lua must name a theme it installs
+qt6ct                       # env.lua sets QT_QPA_PLATFORMTHEME=qt6ct
+
+# ── Terminal and shell ────────────────────────────────────────────────────────
+kitty
+fish
+starship                    # Prompt
+eza                         # `ls` alias in fish
+fastfetch                   # Runs at login
+neovim
+
+# ── Apps bound to keys in binds.lua ───────────────────────────────────────────
+firefox                     # Super+W
+nautilus                    # Super+E
+obsidian                    # Super+N
+resources                   # Ctrl+Shift+Escape
+spotify                     # (AUR) Super+M
+spicetify-cli               # (AUR, optional) Spotify theme in spicetify/
+
+# ── Services to enable after installing (not packages) ───────────────────────
+#   sudo systemctl enable --now NetworkManager bluetooth
+#   systemctl --user enable --now pipewire.socket pipewire-pulse.socket wireplumber
+#   systemctl --user enable --now hyprsunset hypridle

@@ -61,16 +61,35 @@ PillSurface {
     property string origAction: ""
 
     /**
-     * Binds whose combo, label, name or inner command contains the current query
-     * as a case-insensitive substring. An empty query passes every bind through.
+     * Which page the list shows: "main" holds plain shortcuts and the desktop
+     * (numbered workspace) binds, "apps" the app launchers. Special-workspace
+     * keys are left to the Workspaces surface and never listed here.
+     */
+    property string view: "main"
+
+    /** Fixed display order for the category sections the main page groups binds into. */
+    readonly property var categoryOrder: ({ "Shortcuts": 0, "Desktops": 1 })
+
+    /**
+     * The current page's binds whose combo, label, name or inner command
+     * contains the query as a case-insensitive substring (an empty query passes
+     * every bind through), grouped by category so section headers never repeat.
      */
     readonly property var filtered: {
-        if (root.query.length === 0)
-            return root.binds;
-        var q = root.query.toLowerCase();
-        return root.binds.filter(function (b) {
-            return (b.combo + " " + b.label + " " + b.name + " " + b.cmd).toLowerCase().indexOf(q) !== -1;
+        var base = root.binds.filter(function (b) {
+            return root.view === "apps" ? b.category === "Apps" : root.categoryOrder[b.category] !== undefined;
         });
+        if (root.query.length > 0) {
+            var q = root.query.toLowerCase();
+            base = base.filter(function (b) {
+                return (b.combo + " " + b.label + " " + b.name + " " + b.cmd).toLowerCase().indexOf(q) !== -1;
+            });
+        }
+        var out = base.slice();
+        out.sort(function (a, b) {
+            return root.categoryOrder[a.category] - root.categoryOrder[b.category];
+        });
+        return out;
     }
 
     /**
@@ -155,6 +174,31 @@ PillSurface {
         root.conflict = "";
     }
 
+    function setView(v) {
+        root.closeForm();
+        root.view = v;
+        root.focusIndex = 0;
+        searchField.text = "";
+        list.positionViewAtBeginning();
+    }
+
+    /**
+     * Step back one level inside the surface: a form to its list, the apps page
+     * to the main page. Returns false when already at the top, so the host can
+     * leave the surface instead.
+     */
+    function back() {
+        if (root.formOpen) {
+            root.closeForm();
+            return true;
+        }
+        if (root.view !== "main") {
+            root.setView("main");
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Apply a captured chord to the form state (not the file). A bare modifier is
      * ignored so capture keeps waiting for the final key; Escape ends capture.
@@ -188,7 +232,7 @@ PillSurface {
                 root.conflict = root.formCombo + " already bound";
                 return;
             }
-            var a = Binds.add(text, root.formCombo, root.formCmd, root.formName);
+            var a = Binds.add(text, root.formCombo, root.formCmd, root.formName, root.view === "apps" ? "Apps" : "");
             if (!a.ok) { root.conflict = a.error || "add failed"; return; }
             writer.setText(a.text);
             return;
@@ -241,6 +285,7 @@ PillSurface {
     onActiveChanged: {
         if (active) {
             bindsFile.reload();
+            view = "main";
             refresh();
             focusIndex = 0;
             listening = false;
@@ -272,6 +317,71 @@ PillSurface {
 
     ameForm: rowFocused ? "rowseam" : "off"
     amePoint: rowPoint
+
+    /** A bordered row that leads to a sub-page, with a leading glyph and a trailing chevron. */
+    component NavRow: Item {
+        id: nav
+
+        property string icon
+        property string text
+        signal clicked()
+
+        width: parent.width
+        height: visible ? 38 * root.s : 0
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.topMargin: 5 * root.s
+            anchors.bottomMargin: 5 * root.s
+            radius: 9 * root.s
+            color: navArea.containsMouse ? Theme.frameBg : "transparent"
+            border.width: 1
+            border.color: Theme.hairSoft
+
+            Row {
+                anchors.left: parent.left
+                anchors.leftMargin: 12 * root.s
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 9 * root.s
+
+                GlyphIcon {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 15 * root.s
+                    height: 15 * root.s
+                    name: nav.icon
+                    color: Theme.iconDim
+                    stroke: 1.8
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: nav.text
+                    color: Theme.subtle
+                    font.family: Theme.font
+                    font.pixelSize: 11.5 * root.s
+                    font.weight: Font.Medium
+                }
+            }
+
+            GlyphIcon {
+                anchors.right: parent.right
+                anchors.rightMargin: 12 * root.s
+                anchors.verticalCenter: parent.verticalCenter
+                width: 15 * root.s
+                height: 15 * root.s
+                name: "chevron-right"
+                color: Theme.iconDim
+                stroke: 2
+            }
+
+            MouseArea {
+                id: navArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: nav.clicked()
+            }
+        }
+    }
 
     FileView {
         id: bindsFile
@@ -336,7 +446,7 @@ PillSurface {
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "KEYBINDS"
+                    text: root.view === "apps" ? "APP KEYBINDS" : "KEYBINDS"
                     color: Theme.subtle
                     font.family: Theme.font
                     font.pixelSize: 10 * root.s
@@ -410,6 +520,23 @@ PillSurface {
 
         Item { width: 1; height: 8 * root.s }
 
+        NavRow {
+            visible: !root.formOpen && root.view === "main"
+            icon: "app-window"
+            text: "App keybinds"
+            onClicked: root.setView("apps")
+        }
+
+        NavRow {
+            visible: !root.formOpen && root.view === "main"
+            icon: "layers"
+            text: "Special workspaces"
+            onClicked: root.requestSurface("workspaces")
+        }
+
+        Item { width: 1; height: 8 * root.s; visible: !root.formOpen && root.view === "main" }
+
+
         ListView {
             id: list
             width: parent.width
@@ -418,6 +545,28 @@ PillSurface {
             clip: true
             boundsBehavior: Flickable.StopAtBounds
             model: root.filtered
+
+            section.property: root.view === "main" ? "category" : ""
+            section.criteria: ViewSection.FullString
+            section.delegate: Item {
+                id: sectionHeader
+                required property string section
+                width: list.width
+                height: 24 * root.s
+
+                Text {
+                    anchors.left: parent.left
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 5 * root.s
+                    text: sectionHeader.section
+                    color: Theme.faint
+                    font.family: Theme.font
+                    font.pixelSize: 9.5 * root.s
+                    font.weight: Font.DemiBold
+                    font.capitalization: Font.AllUppercase
+                    font.letterSpacing: 1.2 * root.s
+                }
+            }
 
             property Item focusRowItem: null
 

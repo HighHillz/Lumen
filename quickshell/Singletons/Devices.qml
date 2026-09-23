@@ -2,12 +2,14 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Hyprland
 
 /**
- * Single owner of screen vibrance (nvibrant) and external-monitor brightness
- * (ddcutil) for the mixer. The persisted vibrance percent is the source of
- * truth: loaded and re-applied once at startup so the tint survives a reboot,
- * and every later set both pushes to nvibrant and writes back the state file.
+ * Single owner of screen vibrance (a Hyprland screen shader) and
+ * external-monitor brightness (ddcutil) for the mixer. The persisted vibrance
+ * percent is the source of truth: loaded and re-applied once at startup so the
+ * tint survives a reboot, and every later set both pushes the shader and writes
+ * back the state file.
  * DDC monitors come from `ddcutil detect` (one brightness fader each); the
  * setvcp/getvcp wire format lives here so every caller speaks it the same.
  * The internal laptop backlight (eDP, no DDC/CI) is driven separately via
@@ -56,16 +58,49 @@ Singleton {
         saveVibrance(pct);
     }
 
+    readonly property string shaderDir: (Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache")) + "/lumen"
+
+    /** Flips between two shader files, since Hyprland skips a reload when the path is unchanged. */
+    property bool shaderFlip: false
+
     /**
-     * nvibrant takes one value per connector slot and ignores extras, so the
-     * same value goes to every slot rather than guessing which ones are lit.
+     * Fragment shader that boosts saturation, weighted toward dull colours so
+     * already-vivid ones don't clip, which is the same idea as NVIDIA's digital
+     * vibrance. The strength is baked in because screen shaders take no uniforms.
+     */
+    function vibranceShader(strength) {
+        return "#version 300 es\n"
+            + "precision highp float;\n"
+            + "in vec2 v_texcoord;\n"
+            + "uniform sampler2D tex;\n"
+            + "out vec4 fragColor;\n"
+            + "const float STRENGTH = " + strength.toFixed(3) + ";\n"
+            + "void main() {\n"
+            + "    vec4 c = texture(tex, v_texcoord);\n"
+            + "    float luma = dot(c.rgb, vec3(0.2126, 0.7152, 0.0722));\n"
+            + "    float sat = max(c.r, max(c.g, c.b)) - min(c.r, min(c.g, c.b));\n"
+            + "    c.rgb = mix(vec3(luma), c.rgb, 1.0 + STRENGTH * (1.0 - sat));\n"
+            + "    fragColor = vec4(clamp(c.rgb, 0.0, 1.0), c.a);\n"
+            + "}\n";
+    }
+
+    /**
+     * Applies vibrance as a Hyprland screen shader, which works on every
+     * output whichever GPU drives it (nvibrant only reached NVIDIA outputs, so
+     * it never touched an iGPU-driven laptop panel). 0% drops the shader
+     * entirely, so neutral costs nothing.
      */
     function applyVibrance(pct) {
-        var raw = Math.round(Math.max(0, Math.min(100, pct)) * 1023 / 100);
-        var args = ["nvibrant"];
-        for (var i = 0; i < 16; i++)
-            args.push(String(raw));
-        Quickshell.execDetached(args);
+        var strength = Math.max(0, Math.min(100, pct)) / 100;
+        if (strength <= 0) {
+            Quickshell.execDetached(["hyprctl", "eval", 'hl.config({decoration={screen_shader=""}})']);
+            return;
+        }
+        root.shaderFlip = !root.shaderFlip;
+        var path = root.shaderDir + "/vibrance-" + (root.shaderFlip ? "a" : "b") + ".frag";
+        Quickshell.execDetached(["sh", "-c",
+            'mkdir -p "$(dirname "$1")" && printf "%s" "$2" > "$1" && hyprctl eval "hl.config({decoration={screen_shader=\\"$1\\"}})"',
+            "_", path, root.vibranceShader(strength)]);
     }
 
     function saveVibrance(pct) {
@@ -134,6 +169,24 @@ Singleton {
                     root.backlightPresent = true;
                 }
             }
+        }
+    }
+
+    /** A config reload resets screen_shader, so the saved vibrance goes back on after it. */
+    Connections {
+        target: Hyprland
+        function onRawEvent(event) {
+            if (event.name === "configreloaded" && root.vibrance > 0)
+                root.applyVibrance(root.vibrance);
+        }
+    }
+
+    /** Keeps the mixer's fader in step when the brightness keys move the backlight. */
+    Connections {
+        target: Backlight
+        function onBrightnessChanged() {
+            if (Backlight.present)
+                root.backlightPct = Math.max(1, Math.round(Backlight.brightness * 100));
         }
     }
 

@@ -59,6 +59,7 @@ Singleton {
         ready = true;
         resolveTwitch();
         resolveNetflix();
+        resolveSpotify();
     }
 
     onListChanged: {
@@ -132,7 +133,7 @@ Singleton {
     readonly property bool playing: has && active.isPlaying
     /** Falls back to the service label so a titleless DRM stream still reads as its site. */
     readonly property string title: has ? refineTitle(active, active.trackTitle || labelOf(active)) : ""
-    readonly property string artist: has ? Theme.joinArtists(active.trackArtists, active.trackArtist) : ""
+    readonly property string artist: has ? refineArtist(active, Theme.joinArtists(active.trackArtists, active.trackArtist)) : ""
     readonly property string trackUrl: urlOf(active)
     readonly property string artUrl: artUrlFor(active)
     readonly property real lengthSec: has && active.length > 0 ? active.length : 0
@@ -318,12 +319,67 @@ Singleton {
         return raw;
     }
 
+    /**
+     * Spotify's MPRIS only ever sends the track's first artist. The public track
+     * page lists every credited artist in the app's order (its
+     * music:musician_description meta), so fetch that once per track and swap
+     * it in wherever the one-name metadata would show. Results are cached by
+     * track id, so skipping back to a song doesn't refetch it.
+     */
+    property var spotifyCredits: ({})
+    property string spotifyPending: ""
+
+    function spotifyIdOf(url) {
+        var m = url.match(/^https?:\/\/open\.spotify\.com\/track\/([A-Za-z0-9]+)/);
+        return m ? m[1] : "";
+    }
+
+    function decodeEntities(t) {
+        return t.replace(/&#x([0-9a-f]+);/gi, function (_, h) { return String.fromCharCode(parseInt(h, 16)); })
+                .replace(/&#(\d+);/g, function (_, d) { return String.fromCharCode(parseInt(d, 10)); })
+                .replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+                .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+    }
+
+    function resolveSpotify() {
+        var id = spotifyIdOf(trackUrl);
+        if (id.length === 0 || id === spotifyPending || spotifyCredits[id] !== undefined)
+            return;
+        spotifyPending = id;
+        var xhr = new XMLHttpRequest();
+        xhr.timeout = 8000;
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== XMLHttpRequest.DONE)
+                return;
+            if (root.spotifyPending === id)
+                root.spotifyPending = "";
+            if (xhr.status !== 200)
+                return;
+            var m = xhr.responseText.match(/name="music:musician_description"\s+content="([^"]+)"/);
+            if (!m)
+                return;
+            var next = Object.assign({}, root.spotifyCredits);
+            next[id] = root.decodeEntities(m[1]);
+            root.spotifyCredits = next;
+        };
+        xhr.open("GET", "https://open.spotify.com/track/" + id);
+        xhr.send();
+    }
+
+    /** Swaps a Spotify track's single MPRIS artist for its full credit list once resolved. */
+    function refineArtist(p, raw) {
+        var id = spotifyIdOf(urlOf(p));
+        var full = id.length > 0 ? spotifyCredits[id] : undefined;
+        return full ? full : raw;
+    }
+
     /** Twitch exposes no MPRIS art; resolve the streamer avatar async, live preview stands in. */
     property string twitchAvatar: ""
     property string twitchChannel: ""
     onTrackUrlChanged: {
         resolveTwitch();
         resolveNetflix();
+        resolveSpotify();
     }
 
     function resolveTwitch() {
