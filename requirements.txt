@@ -42,6 +42,8 @@ pipewire-pulse
 wireplumber                 # wpctl, used by the volume and mic-mute keys
 cava                        # Music visualizer (Settings → Appearance). Without it the toggle
                             # silently does nothing; run `lumen restart` after installing
+vlc                         # Plays audio and video files (mp3, mp4, ...)
+vlc-plugins-all             # VLC's codecs and outputs; vlc alone can't play many files
 
 # ── Hardware controls ─────────────────────────────────────────────────────────
 brightnessctl               # Laptop backlight (brightness keys and the Mixer fader)

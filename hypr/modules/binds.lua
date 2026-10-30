@@ -73,11 +73,12 @@ hl.bind(mod .. " + CTRL + 8", hl.dsp.window.move({ workspace = 8, follow = false
 hl.bind(mod .. " + CTRL + 9", hl.dsp.window.move({ workspace = 9, follow = false }))
 hl.bind(mod .. " + CTRL + 0", hl.dsp.window.move({ workspace = 10, follow = false }))
 
--- Previous / next workspace
-hl.bind(mod .. " + Left", hl.dsp.focus({ workspace = "r-1" }))
-hl.bind(mod .. " + Right", hl.dsp.focus({ workspace = "r+1" }))
-hl.bind(mod .. " + mouse_up", hl.dsp.focus({ workspace = "r-1" }))
-hl.bind(mod .. " + mouse_down", hl.dsp.focus({ workspace = "r+1" }))
+-- Previous / next workspace, wrapping within 1-10
+local wsStep = os.getenv("HOME") .. "/.config/hypr/scripts/workspace-step.sh"
+hl.bind(mod .. " + Left", hl.dsp.exec_cmd(wsStep .. " prev")) -- Previous workspace
+hl.bind(mod .. " + Right", hl.dsp.exec_cmd(wsStep .. " next")) -- Next workspace
+hl.bind(mod .. " + mouse_up", hl.dsp.exec_cmd(wsStep .. " prev")) -- Previous workspace
+hl.bind(mod .. " + mouse_down", hl.dsp.exec_cmd(wsStep .. " next")) -- Next workspace
 
 -- Special workspaces
 hl.bind(mod .. " + P", hl.dsp.workspace.toggle_special("private"))

@@ -11,9 +11,9 @@ import "Singletons"
  * in the Hyprland Lua modules, writing each change straight back to its source so
  * the choice survives a restart. Pointer and keyboard fields rewrite input.lua
  * and reload Hyprland; the layout row cycles a curated list of common layouts.
- * Cursor size and theme apply live through `hyprctl setcursor` with no reload,
- * and persist by rewriting the XCURSOR/HYPRCURSOR env lines and the autostart
- * setcursor call. The theme list is scanned from the installed icon themes that
+ * Cursor size and theme apply live through `hyprctl setcursor`, the GTK
+ * gsettings keys and the `default` icon theme with no reload, and persist by
+ * rewriting the XCURSOR/HYPRCURSOR env lines and the autostart setcursor call. The theme list is scanned from the installed icon themes that
  * carry a `cursors/` folder. Reached from the settings index; morphs back on the
  * back chevron.
  */
@@ -233,11 +233,21 @@ SettingsSurface {
         }
     }
 
+    /**
+     * Hyprland's own cursor follows `hyprctl setcursor`, but GTK apps (Nautilus,
+     * Firefox) read the gsettings cursor keys and XWayland apps fall back to the
+     * `default` icon theme, so all three are set or those apps keep the old cursor.
+     */
     Process {
         id: setcursorProc
         property string theme: ""
         property int size: 24
-        command: ["hyprctl", "setcursor", theme, String(size)]
+        command: ["sh", "-c",
+            "hyprctl setcursor \"$1\" \"$2\"; " +
+            "gsettings set org.gnome.desktop.interface cursor-theme \"$1\" 2>/dev/null; " +
+            "gsettings set org.gnome.desktop.interface cursor-size \"$2\" 2>/dev/null; " +
+            "mkdir -p \"$HOME/.icons/default\" && printf '[Icon Theme]\\nInherits=%s\\n' \"$1\" > \"$HOME/.icons/default/index.theme\"",
+            "sh", theme, String(size)]
     }
 
     Process {

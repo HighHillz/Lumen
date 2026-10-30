@@ -16,7 +16,7 @@ An achromatic wallpaper gets a neutral grey ramp.
 Consumers:
 - Quickshell: ~/.cache/lumen/colors.json
 - Hyprland: ~/.cache/lumen/hypr-colors.lua
-- Kitty: ~/.cache/lumen/kitty-colors.conf
+- Kitty: ~/.cache/lumen/kitty-colors.conf (text, background, ANSI and tab colours)
 - Starship: ~/.config/starship.toml
 - Fastfetch: ~/.config/fastfetch/config.jsonc
 
@@ -366,15 +366,50 @@ def render_fish(pill, hue, light):
     )
 
 
-def render_kitty(pill):
-    """
-    Kitty only needs the two tab title templates.
+# ANSI hues for Kitty's 16-colour palette: red, green, yellow, blue, magenta,
+# cyan. Lightness flips with the theme so every colour stays readable on the
+# light or dark background the palette paints behind it. Green, yellow and cyan
+# read brighter at equal lightness, so on a light background they sit darker.
+ANSI_HUES = [0.0, 0.33, 0.12, 0.60, 0.83, 0.50]
+ANSI_LIGHT_SHIFT = [0.0, -0.10, -0.10, 0.0, 0.0, -0.10]
 
-    No other Kitty colours are generated here.
+
+def render_kitty(pill, hue, light):
+    """
+    Kitty's text, background and 16 ANSI colours, plus the tab title templates.
+
+    The background is the palette surface (kitty.conf keeps it translucent), so
+    a bright wallpaper gets a light surface with dark text and a dark wallpaper
+    the reverse. Kitty's stock colours are light-on-black, which on a bright
+    wallpaper left pale text over a pale see-through background.
     """
 
     def kitty_hex(value):
         return value.lstrip("#").upper()
+
+    if light:
+        ansi_l, ansi_bright_l, ansi_sat = 0.36, 0.28, 0.70
+        black, black_bright = tint(hue, 0.10, 0.18), tint(hue, 0.08, 0.42)
+        white, white_bright = tint(hue, 0.08, 0.32), tint(hue, 0.10, 0.12)
+    else:
+        ansi_l, ansi_bright_l, ansi_sat = 0.66, 0.76, 0.62
+        black, black_bright = tint(hue, 0.10, 0.22), tint(hue, 0.08, 0.50)
+        white, white_bright = tint(hue, 0.05, 0.78), tint(hue, 0.03, 0.95)
+
+    shift = ANSI_LIGHT_SHIFT if light else [0.0] * len(ANSI_HUES)
+    normal = [tint(h, ansi_sat, ansi_l + d) for h, d in zip(ANSI_HUES, shift)]
+    bright_ansi = [tint(h, ansi_sat, ansi_bright_l + d) for h, d in zip(ANSI_HUES, shift)]
+    ansi = [black] + normal + [white] + [black_bright] + bright_ansi + [white_bright]
+
+    lines = [
+        f"foreground {pill['cream']}",
+        f"background {pill['surface']}",
+        f"cursor {pill['primary']}",
+        f"cursor_text_color {pill['surface']}",
+        f"selection_foreground {pill['bright'] if not light else pill['surface']}",
+        f"selection_background {pill['primary_container'] if not light else pill['primary']}",
+        f"url_color {pill['primary']}",
+    ] + [f"color{i} {c}" for i, c in enumerate(ansi)]
 
     outline = kitty_hex(
         pill["outline_variant"]
@@ -393,22 +428,24 @@ def render_kitty(pill):
     )
 
     kitty = (
+        "\n".join(lines) + "\n"
+
         f'tab_title_template "{{fmt.fg._{outline}}}'
-        f'{{fmt.bg._{surface}}}'
+        f'{{fmt.bg._{surface}}}'
         f'{{fmt.fg._{bright}}}'
         f'{{fmt.bg._{outline}}} '
         f'({{index}}) {{title}} '
         f'{{fmt.fg._{outline}}}'
-        f'{{fmt.bg._{surface}}} "\n'
+        f'{{fmt.bg._{surface}}} "\n'
 
         f'active_tab_title_template '
         f'"{{fmt.fg._{primary}}}'
-        f'{{fmt.bg._{surface}}}'
+        f'{{fmt.bg._{surface}}}'
         f'{{fmt.fg._{bright}}}'
         f'{{fmt.bg._{primary}}} '
         f'({{index}}) {{title}} '
         f'{{fmt.fg._{primary}}}'
-        f'{{fmt.bg._{surface}}} "\n'
+        f'{{fmt.bg._{surface}}} "\n'
     )
 
     (
@@ -816,7 +853,11 @@ def main():
         light,
     )
 
-    render_kitty(pill)
+    render_kitty(
+        pill,
+        hue,
+        light,
+    )
 
     render_starship(pill)
 

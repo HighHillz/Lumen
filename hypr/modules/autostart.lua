@@ -1,5 +1,7 @@
 hl.on("hyprland.start", function()
 	hl.exec_cmd("hyprlock")
+	-- Settings → Input rewrites this line when the cursor theme or size changes
+	hl.exec_cmd("hyprctl setcursor Bibata-Original-Classic 24")
 	hl.exec_cmd(os.getenv("HOME") .. "/.config/hypr/scripts/cliphist-watch.sh")
 	hl.exec_cmd(os.getenv("HOME") .. "/.config/hypr/scripts/wallpaper.sh init")
 	hl.exec_cmd("systemctl --user start hyprland-session.target")
