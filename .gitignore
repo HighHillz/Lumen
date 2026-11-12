@@ -71,3 +71,5 @@ configs/hypr/hyprsunset.conf
 .impeccable/
 
 to-do.txt
+# Private learning guide, local only
+MY-SETUP-GUIDE.md

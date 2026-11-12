@@ -5,9 +5,11 @@ import Quickshell.Services.Pipewire
 import "Singletons"
 
 /**
- * Mixer surface: header with DND / Keep-Awake chips and a row of four vertical
- * ink-faders wired to real hardware (brightness via ddcutil, vibrance via
- * nvibrant, volume and mic via Pipewire). Fills the lower body of the pill.
+ * Mixer surface: header with DND / Keep-Awake / Night-light chips and a row of
+ * vertical ink-faders wired to real hardware: one brightness fader per
+ * controllable external monitor (ddcutil) plus the laptop backlight
+ * (brightnessctl), vibrance (a Hyprland screen shader), and volume and mic via
+ * Pipewire. Fills the lower body of the pill.
  */
 PillSurface {
     id: root

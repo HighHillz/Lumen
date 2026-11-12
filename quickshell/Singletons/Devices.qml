@@ -144,9 +144,15 @@ Singleton {
         running: false
         stdout: StdioCollector {
             onStreamFinished: {
+                // Each block opens on an unindented header line. Only "Display N"
+                // blocks are controllable; "Invalid display" is a panel ddcutil sees
+                // but can't drive (a laptop's own eDP screen), which the backlight
+                // fader already covers, so it must not get a dead fader of its own.
                 var mons = [];
-                var blocks = this.text.split(/\bDisplay \d+/);
+                var blocks = this.text.split(/\n(?=\S)/);
                 for (var i = 0; i < blocks.length; i++) {
+                    if (!/^Display \d+/.test(blocks[i].trim()))
+                        continue;
                     var bus = /I2C bus:\s+\/dev\/i2c-(\d+)/.exec(blocks[i]);
                     var conn = /DRM connector:\s+card\d+-(\S+)/.exec(blocks[i]);
                     if (bus)

@@ -59,6 +59,15 @@ gpu-screen-recorder         # Recorder backend (Super+R)
 slurp                       # Region selection for recordings
 kdialog                     # (optional) folder picker for the recordings folder; zenity also works
 
+# ── Printing ──────────────────────────────────────────────────────────────────
+cups                        # (optional) print system; the pill's printer icon reads it via lpstat
+ghostscript                 # Renders pages for printer drivers
+jbigkit                     # (optional) pbmtojbg, used by the Ricoh SP 1xx DDST driver
+inotify-tools               # (optional) inotifywait, used by the Ricoh SP 1xx DDST driver
+                            # The Ricoh SP 111 driver itself (pstoricohddst-gdi) is installed by hand.
+                            # Under Ghostscript 10 its two `gs -sDEVICE=pbmraw` calls need
+                            # --permit-file-write=${uid}/ or every job prints 0 pages
+
 # ── Utilities the shell and scripts call ──────────────────────────────────────
 jq                          # JSON parsing in scripts
 curl                        # Weather, wallpaper search and previews

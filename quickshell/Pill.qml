@@ -748,6 +748,8 @@ Item {
             return wifiIcon.mapToItem(pill, wifiIcon.width / 2, wifiIcon.height + drop * 0.55);
         if (soulTarget === "bt")
             return btIcon.mapToItem(pill, btIcon.width / 2, btIcon.height + drop * 0.55);
+        if (soulTarget === "printer")
+            return printerIcon.mapToItem(pill, printerIcon.width / 2, printerIcon.height + drop * 0.55);
         if (soulTarget === "battery")
             return batteryIcon.mapToItem(pill, batteryIcon.width / 2, batteryIcon.height + drop * 0.55);
         if (soulTarget === "inbox")
@@ -1514,7 +1516,7 @@ Item {
 
                 Row {
                     anchors.verticalCenter: parent.verticalCenter
-                    visible: pill.wifiDev !== null || pill.btAdapter !== null || Battery.present
+                    visible: pill.wifiDev !== null || pill.btAdapter !== null || Battery.present || Printers.visible
                     spacing: 12 * pill.s
 
                     Item {
@@ -1601,6 +1603,72 @@ Item {
                                 pill.requestSurface("bt");
                             }
                             onContainsMouseChanged: if (containsMouse) pill.soulTarget = "bt"
+                        }
+                    }
+
+                    /**
+                     * Default printer: shown while a USB printer is plugged in, a job is
+                     * queued or the queue has a problem. Dim when idle, flame while
+                     * printing (with the job count), vermilion when stopped or erroring.
+                     * Left-click opens the CUPS queue page, right-click cancels my jobs.
+                     */
+                    Item {
+                        id: printerIcon
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: Printers.visible
+                        width: 15 * pill.s + (printerJobs.visible ? printerJobs.implicitWidth + 4 * pill.s : 0)
+                        height: 15 * pill.s
+
+                        GlyphIcon {
+                            id: printerGlyph
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 15 * pill.s
+                            height: 15 * pill.s
+                            name: "printer"
+                            color: printerArea.containsMouse ? Theme.cream
+                                : Printers.problem ? Theme.vermLit
+                                : Printers.jobs > 0 ? Theme.flameGlow
+                                : Theme.iconDim
+                            stroke: 1.7
+
+                            SequentialAnimation on opacity {
+                                running: Printers.printing
+                                loops: Animation.Infinite
+                                onRunningChanged: if (!running) printerGlyph.opacity = 1
+                                NumberAnimation { to: 0.45; duration: 600; easing.type: Easing.InOutSine }
+                                NumberAnimation { to: 1; duration: 600; easing.type: Easing.InOutSine }
+                            }
+                        }
+
+                        Text {
+                            id: printerJobs
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: Printers.jobs > 0 || Printers.problem
+                            text: Printers.problem ? "!" : String(Printers.jobs)
+                            color: Printers.problem ? Theme.vermLit : Theme.flameGlow
+                            font.family: Theme.font
+                            font.pixelSize: 11 * pill.s
+                            font.weight: Font.DemiBold
+                            font.features: { "tnum": 1 }
+                        }
+
+                        MouseArea {
+                            id: printerArea
+                            anchors.fill: parent
+                            anchors.margins: -6 * pill.s
+                            hoverEnabled: true
+                            enabled: hover.live
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: (e) => {
+                                if (e.button === Qt.RightButton)
+                                    Printers.cancelMine();
+                                else
+                                    Printers.openQueue();
+                            }
+                            onContainsMouseChanged: if (containsMouse) pill.soulTarget = "printer"
                         }
                     }
 
