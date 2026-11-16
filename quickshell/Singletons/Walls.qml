@@ -28,8 +28,9 @@ import Quickshell.Io
  * Albums are the wallpaper folder's subfolders, minus `downloads` (where online
  * search saves its picks), as { name, count }. The shuffle timer changes the
  * wallpaper every Flags.wallpaperShuffleMin minutes through wallpaper.sh's
- * random mode, the same no-repeat bag Super+B uses, so it draws from the
- * selected album and honours the random-scope setting.
+ * shuffle mode, the same no-repeat bag Super+B uses, so it draws from the
+ * selected album; it always repaints every screen, since the random-scope
+ * setting only applies to Super+B (which is blocked while shuffle runs).
  */
 Singleton {
     id: root
@@ -187,7 +188,8 @@ Singleton {
 
     /**
      * Automatic shuffle. Runs whether or not the strip is open; wallpaper.sh
-     * with no argument is its random mode. A tick that lands while a manual pick
+     * "shuffle" is its timed random mode, which always repaints every screen
+     * (Super+B is refused while this runs). A tick that lands while a manual pick
      * is still transitioning is skipped rather than stacked.
      */
     Timer {
@@ -199,7 +201,7 @@ Singleton {
 
     Process {
         id: shuffleProc
-        command: ["bash", root.setScript, ""]
+        command: ["bash", root.setScript, "shuffle"]
         onExited: stateProc.running = true
     }
 

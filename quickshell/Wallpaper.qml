@@ -96,6 +96,15 @@ PillSurface {
      */
     property bool hintShown: false
 
+    /** Saved file name, minus extension, of the focused (front) tile. */
+    readonly property string shownName: {
+        if (focusIndex < 0 || focusIndex >= itemCount)
+            return "";
+        var n = items[focusIndex].name;
+        var dot = n.lastIndexOf(".");
+        return dot > 0 ? n.substring(0, dot) : n;
+    }
+
     /** Output name under the pointer in the focused tile's screen picker, "" when none. */
     property string monHover: ""
 
@@ -318,6 +327,24 @@ PillSurface {
             cursorShape: Qt.PointingHandCursor
             onClicked: root.albumOpen = !root.albumOpen
         }
+    }
+
+    /** Name of the focused wallpaper, level with the album capsule. */
+    Text {
+        anchors.left: parent.left
+        anchors.leftMargin: 16 * root.s
+        anchors.right: albumBtn.left
+        anchors.rightMargin: 12 * root.s
+        anchors.verticalCenter: albumBtn.verticalCenter
+        z: 40
+        visible: root.itemCount > 0
+        text: root.shownName
+        elide: Text.ElideRight
+        color: Theme.cream
+        font.family: Theme.font
+        font.pixelSize: 12 * root.s
+        font.weight: Font.DemiBold
+        font.letterSpacing: 0.2 * root.s
     }
 
     /** Click-away catcher: any click outside the open panel closes it. */

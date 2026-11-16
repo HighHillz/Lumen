@@ -85,7 +85,7 @@ SettingsSurface {
         { item: secRow, kind: "toggle", get: function () { return Flags.clockSeconds; }, set: function (v) { Flags.clockSeconds = v; } },
         { item: vizRow, kind: "toggle", get: function () { return Flags.musicViz; }, set: function (v) { Flags.musicViz = v; } },
         { item: paletteRow, kind: "seg", vals: ["static", "dynamic", "manual"], get: function () { return Flags.paletteMode; }, set: function (v) { root.applyMode(v); } },
-        { item: randomRow, kind: "seg", vals: ["all", "cursor"], get: function () { return Flags.randomScope; }, set: function (v) { Flags.randomScope = v; } },
+        { item: randomRow, kind: "seg", vals: ["all", "cursor"], get: function () { return Flags.randomScope; }, set: function (v) { if (Flags.wallpaperShuffleMin === 0) Flags.randomScope = v; } },
         { item: scaleRow, kind: "seg", vals: [0.9, 1.0, 1.1, 1.25], get: function () { return Flags.uiScale; }, set: function (v) { Flags.uiScale = v; } },
         { item: motionRow, kind: "toggle", get: function () { return Flags.reduceMotion; }, set: function (v) { Flags.reduceMotion = v; } },
         { item: fontRow, kind: "nav", surface: "fontpicker" }
@@ -360,9 +360,16 @@ SettingsSurface {
             surface: root
             name: "Random wallpaper"
             icon: "monitor"
+            // Only Super+B uses the scope, and Super+B is blocked while the
+            // wallpaper shuffle runs, so the choice is locked until it is off.
+            // Disabling the whole row drops its hover wash, pointer cursor and
+            // click-to-cycle along with the segment pills' own hover and clicks.
+            enabled: Flags.wallpaperShuffleMin === 0
+            sub: Flags.wallpaperShuffleMin > 0 ? "Turn off shuffle to choose" : ""
 
             SettingsSeg {
                 s: root.s
+                opacity: randomRow.enabled ? 1 : 0.4
                 options: [{ label: "All screens", value: "all" }, { label: "Cursor screen", value: "cursor" }]
                 value: Flags.randomScope
                 onPicked: (v) => Flags.randomScope = v

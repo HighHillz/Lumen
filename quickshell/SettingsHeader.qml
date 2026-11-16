@@ -2,8 +2,8 @@ import QtQuick
 import "Singletons"
 
 /**
- * Settings surface header: the uppercase title on the left, with a cog at the index or a back chevron on a
- * sub-surface at the right. The header strip is the back target, but the click is
+ * Settings surface header: the uppercase title on the left, and a back chevron at
+ * the right on a sub-surface (the index shows the title alone). The header strip is the back target, but the click is
  * handled at the pill level (a press anywhere on the top strip steps the surface
  * back), so this is a pure visual.
  */
@@ -37,10 +37,11 @@ Item {
     GlyphIcon {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
+        visible: head.showBack
         width: 16 * head.s
         height: 16 * head.s
-        name: head.showBack ? "chevron-left" : "cog"
+        name: "chevron-left"
         color: Theme.iconDim
-        stroke: head.showBack ? 2.2 : 1.7
+        stroke: 2.2
     }
 }

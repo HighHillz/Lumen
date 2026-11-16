@@ -50,7 +50,7 @@ Rectangle {
                 width: optLabel.implicitWidth + 18 * seg.s
                 height: optLabel.implicitHeight + 12 * seg.s
                 radius: 8 * seg.s
-                color: opt.current ? Qt.alpha(Theme.onGlow, 0.16) : (opt.hovered ? Theme.frameBg : "transparent")
+                color: opt.current ? Qt.alpha(Theme.onGlow, 0.16) : (opt.hovered && seg.enabled ? Theme.frameBg : "transparent")
                 Behavior on color { ColorAnimation { duration: Motion.fast } }
 
                 Text {

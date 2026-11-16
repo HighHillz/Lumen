@@ -335,6 +335,20 @@ restore_all() {
   exit 0
 }
 
+# Super+B (random mode, empty arg) yields to the automatic shuffle: while a
+# shuffle interval is set, the hotkey only explains why it did nothing. The
+# shuffle timer itself calls with "shuffle" and is never blocked.
+if [ -z "${1:-}" ]; then
+  shuffle_min=$(jq -r '.wallpaperShuffleMin // 0' "$flags_file" 2>/dev/null || echo 0)
+  if [ "$shuffle_min" != "0" ]; then
+    gdbus call --session --dest org.freedesktop.Notifications \
+      --object-path /org/freedesktop/Notifications \
+      --method org.freedesktop.Notifications.Notify \
+      Lumen 0 '' 'Shuffle is on' 'Turn off shuffle to pick a random wallpaper' '[]' '{}' 3000 >/dev/null 2>&1 || true
+    exit 0
+  fi
+fi
+
 daemon_was_running=true
 awww query >/dev/null 2>&1 || daemon_was_running=false
 ensure_daemon || exit 0
@@ -363,6 +377,10 @@ elif [ "$cmd" = "set" ]; then
 
   target="${3:-}"
   [ "$target" = "all" ] && target=""
+
+elif [ "$cmd" = "shuffle" ]; then
+  # Timed shuffle always repaints every screen; randomScope is a hotkey-only choice.
+  pic=$(pop_bag) || exit 0
 
 else
   scope=$(jq -r '.randomScope // "all"' "$flags_file" 2>/dev/null || echo all)
