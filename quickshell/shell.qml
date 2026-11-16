@@ -41,6 +41,9 @@ ShellRoot {
     Component.onCompleted: {
         refresh();
         Devices.restore();
+        // Singletons start lazily; touching Walls at login starts its wallpaper
+        // shuffle timer without waiting for the strip to be opened.
+        void Walls.count;
     }
         Connections {
         target: Quickshell
@@ -426,12 +429,6 @@ ShellRoot {
                  * is swallowed for everything else so a held key never re-fires.
                  */
                 Keys.onPressed: (e) => {
-                    if (pill.wallpaperOpen && !pill.wallpaperSearching
-                        && e.text.length === 1 && e.text > " ") {
-                        pill.wallpaperType(e.text);
-                        e.accepted = true;
-                        return;
-                    }
                     if (e.key !== Qt.Key_Return && e.key !== Qt.Key_Enter && e.key !== Qt.Key_Space)
                         return;
                     if (pill.wallpaperOpen) {
@@ -551,10 +548,6 @@ ShellRoot {
                 target: pill
                 function onQuickChoosingChanged() {
                     if (pill.quickChoosing)
-                        focusScope.forceActiveFocus();
-                }
-                function onWallpaperSearchingChanged() {
-                    if (!pill.wallpaperSearching && overlay.surfaceOpen)
                         focusScope.forceActiveFocus();
                 }
                 function onKeybindsListeningChanged() {

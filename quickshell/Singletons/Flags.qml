@@ -20,6 +20,8 @@ Singleton {
     property alias paletteMode: adapter.paletteMode
     property alias wallpaperDir: adapter.wallpaperDir
     property alias randomScope: adapter.randomScope
+    property alias wallpaperAlbum: adapter.wallpaperAlbum
+    property alias wallpaperShuffleMin: adapter.wallpaperShuffleMin
     property alias uiScale: adapter.uiScale
     property alias reduceMotion: adapter.reduceMotion
     property alias manualHue: adapter.manualHue
@@ -74,6 +76,10 @@ Singleton {
             property string wallpaperDir: ""
             /** Super+B random target: "all" repaints every monitor, "cursor" only the one under the pointer. */
             property string randomScope: "all"
+            /** Album (a subfolder of the wallpaper folder) the strip shows and random picks draw from. Empty means every wallpaper. */
+            property string wallpaperAlbum: ""
+            /** Minutes between automatic random wallpaper changes. 0 turns the shuffle off. */
+            property int wallpaperShuffleMin: 0
             property real uiScale: 1.0
             property bool reduceMotion: false
             property int manualHue: 30

@@ -20,15 +20,34 @@ import Quickshell.Io
  * to the lumen-wallpaper-dir state file on its last run, then
  * $HOME/Pictures/Wallpapers for a first boot before wallpaper.sh init has run.
  *
- * Entries are plain objects: { path, name, mtime, thumb } where path is the
- * absolute source file, mtime its modification time in epoch seconds and
- * thumb the absolute path of the cached preview png.
+ * Entries are plain objects: { path, name, mtime, thumb, album } where path is
+ * the absolute source file, mtime its modification time in epoch seconds, thumb
+ * the absolute path of the cached preview png and album the top-level subfolder
+ * it sits in ("" for files directly in the wallpaper folder).
+ *
+ * Albums are the wallpaper folder's subfolders, minus `downloads` (where online
+ * search saves its picks), as { name, count }. The shuffle timer changes the
+ * wallpaper every Flags.wallpaperShuffleMin minutes through wallpaper.sh's
+ * random mode, the same no-repeat bag Super+B uses, so it draws from the
+ * selected album and honours the random-scope setting.
  */
 Singleton {
     id: root
 
     property var entries: []
     readonly property int count: entries.length
+    property var albumNames: []
+
+    /** Album list for the strip's dropdown, each with its wallpaper count. */
+    readonly property var albums: {
+        var counts = ({});
+        for (var i = 0; i < entries.length; i++)
+            counts[entries[i].album] = (counts[entries[i].album] || 0) + 1;
+        var out = [];
+        for (var j = 0; j < albumNames.length; j++)
+            out.push({ name: albumNames[j], count: counts[albumNames[j]] || 0 });
+        return out;
+    }
     property string current: ""
     property bool pending: false
 
@@ -55,7 +74,7 @@ Singleton {
     }
 
     function refresh() {
-        if (resolveProc.running || thumbProc.running || listProc.running || stateProc.running) {
+        if (resolveProc.running || thumbProc.running || listProc.running || albumProc.running || stateProc.running) {
             pending = true;
             return;
         }
@@ -137,17 +156,51 @@ Singleton {
                         continue;
                     var path = lines[i].substring(tab + 1);
                     var name = path.substring(path.lastIndexOf("/") + 1);
+                    var rel = path.indexOf(root.wpDir + "/") === 0 ? path.substring(root.wpDir.length + 1) : name;
                     out.push({
                         path: path,
                         name: name,
                         mtime: parseFloat(lines[i].substring(0, tab)),
-                        thumb: root.thumbDir + name + ".png"
+                        thumb: root.thumbDir + name + ".png",
+                        album: rel.indexOf("/") > 0 ? rel.substring(0, rel.indexOf("/")) : ""
                     });
                 }
                 root.entries = out;
+                albumProc.running = true;
+            }
+        }
+    }
+
+    Process {
+        id: albumProc
+        command: ["sh", "-c", "find \"$1\" -mindepth 1 -maxdepth 1 -type d ! -iname downloads ! -name '.*' -printf '%f\\n' | sort -f", "_", root.wpDir]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.albumNames = this.text.split("\n").filter(function (n) { return n.length > 0; });
+                // A deleted or renamed album falls back to showing everything.
+                if (Flags.wallpaperAlbum.length > 0 && root.albumNames.indexOf(Flags.wallpaperAlbum) < 0)
+                    Flags.wallpaperAlbum = "";
                 stateProc.running = true;
             }
         }
+    }
+
+    /**
+     * Automatic shuffle. Runs whether or not the strip is open; wallpaper.sh
+     * with no argument is its random mode. A tick that lands while a manual pick
+     * is still transitioning is skipped rather than stacked.
+     */
+    Timer {
+        interval: Math.max(1, Flags.wallpaperShuffleMin) * 60000
+        running: Flags.wallpaperShuffleMin > 0
+        repeat: true
+        onTriggered: if (!shuffleProc.running && !applyProc.running) shuffleProc.running = true
+    }
+
+    Process {
+        id: shuffleProc
+        command: ["bash", root.setScript, ""]
+        onExited: stateProc.running = true
     }
 
     Process {

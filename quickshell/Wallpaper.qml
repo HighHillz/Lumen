@@ -11,48 +11,31 @@ import "Singletons"
 /**
  * Wallpaper surface: a filmstrip over the wallpaper directory, rendered as one
  * of the pill's surfaces. Thumbs come from the Walls singleton snapshot, newest
- * first. The focused thumb is large and fully lit; neighbours shrink, dim and
+ * first. An album dropdown in the header narrows the strip to one subfolder
+ * (or All) and holds the automatic shuffle interval; both persist in Flags. The focused thumb is large and fully lit; neighbours shrink, dim and
  * desaturate as they slide under it, so the strip reads as depth. Arrow keys
  * and wheel move focus, clicking a neighbour glides to it, Enter or a tap on
  * the focused thumb applies it via wallpaper.sh (strip stays open so you can
  * keep trying picks). Hold the focused thumb for the heat duration to trash the
  * file (press-and-hold confirm, same as the clipboard wipe); progress sweeps
  * along the thumb's lower edge and drains on early release.
- *
- * Typing any printable character while the strip is open drops it into a
- * DuckDuckGo image search: a search field reveals at the top, the strip swaps
- * its model from local files to remote results (debounced fetch through
- * wallpaper-search.sh), and selecting a result downloads it, applies it and
- * returns to the local strip. Escape, an emptied query or a finished pick all
- * fall back to the local view.
  */
 PillSurface {
     id: root
 
     property int focusIndex: 0
 
-    /**
-     * Search mode. While off the strip browses local files and bare keys are
-     * watched for the first printable character; while on the search field is
-     * shown, holds focus and the strip renders remote results for `query`.
-     */
-    property bool searching: false
-    property string query: ""
-    property var ddgResults: []
+    /** Selected album (subfolder), "" for every wallpaper. Persisted in Flags. */
+    readonly property string album: Flags.wallpaperAlbum
 
-    /** Inline folder edit in the header: true while the path field holds focus. */
-    property bool editingDir: false
+    /** True while the album dropdown panel is open. */
+    property bool albumOpen: false
 
-    /**
-     * Kind filter shared by both views: "all", "still" or "motion". Locally it
-     * splits the snapshot by extension (gif and video files count as motion);
-     * in search mode it steers the DDG request (gif type filter) so the chips
-     * act as one control everywhere.
-     */
-    property string kindFilter: "all"
+    /** Shuffle intervals offered in the dropdown, in minutes; 0 is off. */
+    readonly property var shuffleSteps: [0, 5, 15, 30, 60]
 
-    function isMotion(path) {
-        return /\.(gif|mp4|webm|mkv|mov)$/i.test(path);
+    function shuffleLabel(min) {
+        return min === 0 ? "off" : (min >= 60 ? (min / 60) + "h" : min + "m");
     }
 
     /**
@@ -86,12 +69,11 @@ PillSurface {
     }
 
     readonly property var localItems: {
-        if (kindFilter === "all")
+        if (album.length === 0)
             return Walls.entries;
-        var wantMotion = kindFilter === "motion";
         var out = [];
         for (var i = 0; i < Walls.entries.length; i++)
-            if (isMotion(Walls.entries[i].path) === wantMotion)
+            if (Walls.entries[i].album === album)
                 out.push(Walls.entries[i]);
         return out;
     }
@@ -102,20 +84,9 @@ PillSurface {
      * still see the previous filter's list and park the strip on an index the
      * new list does not have.
      */
-    onKindFilterChanged: {
-        if (searching && query.length > 0)
-            debounce.restart();
-        else
-            Qt.callLater(centerOnCurrent);
-    }
+    onAlbumChanged: Qt.callLater(centerOnCurrent)
 
-    /**
-     * Active model and its select handler. The strip, navigation and empty
-     * states all read these so the local and search views share one code path:
-     * a populated query in search mode shows remote results, anything else the
-     * local snapshot.
-     */
-    readonly property var items: (searching && query.length > 0) ? ddgResults : localItems
+    readonly property var items: localItems
     readonly property int itemCount: items.length
 
     /**
@@ -204,16 +175,7 @@ PillSurface {
     function activate() {
         if (focusIndex < 0 || focusIndex >= itemCount)
             return;
-        var entry = items[focusIndex];
-        if (entry.image !== undefined) {
-            if (dlProc.running)
-                return;
-            dlProc.target = entry.image;
-            dlProc.command = ["bash", root.searchScript, "download", entry.image];
-            dlProc.running = true;
-        } else {
-            Walls.apply(entry.path);
-        }
+        Walls.apply(items[focusIndex].path);
     }
 
     function centerOnCurrent() {
@@ -227,38 +189,8 @@ PillSurface {
         pos = idx;
     }
 
-    /**
-     * Leave search mode and fall back to the local strip, re-centring on the
-     * wallpaper currently on screen. Used by Escape, an emptied query and a
-     * completed download.
-     */
-    function exitSearch() {
-        searching = false;
-        query = "";
-        ddgResults = [];
-        searchField.text = "";
-        centerOnCurrent();
-    }
-
-    /**
-     * Begin a search seeded with the first typed character and move keyboard
-     * focus to the field so the rest of the query lands there. shell.qml routes
-     * the opening keystroke here and hands focus back when the search ends.
-     */
-    function startSearch(ch) {
-        searching = true;
-        focusIndex = 0;
-        pos = 0;
-        searchField.text = ch;
-        Qt.callLater(searchField.input.forceActiveFocus);
-    }
-
     onActiveChanged: if (active) {
-        searching = false;
-        editingDir = false;
-        query = "";
-        ddgResults = [];
-        searchField.text = "";
+        albumOpen = false;
         Walls.refresh();
         centerOnCurrent();
         hintShown = false;
@@ -268,57 +200,8 @@ PillSurface {
     Connections {
         target: Walls
         function onEntriesChanged() {
-            if (!root.searching && root.focusIndex >= Walls.count)
+            if (root.focusIndex >= Walls.count)
                 root.focusIndex = Math.max(0, Walls.count - 1);
-        }
-    }
-
-    readonly property string searchScript: Quickshell.env("HOME") + "/.config/hypr/scripts/wallpaper-search.sh"
-
-    /**
-     * Remote video previews. Qt's MediaPlayer chokes on streaming https, so
-     * the focused result's preview clip (small webm) is pulled into /tmp by
-     * curl and played from disk. The fetch is debounced behind the focus and
-     * keyed by url hash, so paging back to a seen result replays instantly and
-     * a stale download can never attach to the wrong tile.
-     */
-    property string previewFile: ""
-
-    readonly property string focusedPreviewUrl: {
-        if (focusIndex < 0 || focusIndex >= itemCount)
-            return "";
-        var e = items[focusIndex];
-        return (e && e.preview !== undefined) ? e.preview : "";
-    }
-
-    onFocusedPreviewUrlChanged: {
-        previewFile = "";
-        prevFetch.running = false;
-        prevDebounce.restart();
-    }
-
-    Timer {
-        id: prevDebounce
-        interval: 250
-        onTriggered: {
-            if (root.focusedPreviewUrl === "")
-                return;
-            prevFetch.url = root.focusedPreviewUrl;
-            prevFetch.command = ["bash", "-c",
-                "f=\"/tmp/lumen-wp-preview-$(printf %s \"$1\" | md5sum | cut -d' ' -f1).webm\"; [ -s \"$f\" ] || curl -fsL --max-time 25 -A 'Mozilla/5.0' -o \"$f\" \"$1\" || { rm -f \"$f\"; exit 1; }; printf %s \"$f\"",
-                "_", root.focusedPreviewUrl];
-            prevFetch.running = true;
-        }
-    }
-
-    Process {
-        id: prevFetch
-        property string url: ""
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (this.text.length && prevFetch.url === root.focusedPreviewUrl)
-                    root.previewFile = this.text;
-            }
         }
     }
 
@@ -330,8 +213,6 @@ PillSurface {
     property var dimsCache: ({})
 
     readonly property string focusedLocalPath: {
-        if (searching && query.length > 0)
-            return "";
         if (focusIndex < 0 || focusIndex >= itemCount)
             return "";
         var e = items[focusIndex];
@@ -371,240 +252,250 @@ PillSurface {
         }
     }
 
-    Timer {
-        id: debounce
-        interval: 350
-        onTriggered: {
-            if (root.query.length === 0) {
-                root.ddgResults = [];
-                return;
-            }
-            searchProc.command = ["bash", root.searchScript, "search", root.query, root.kindFilter];
-            searchProc.running = true;
-        }
-    }
-
-    Process {
-        id: searchProc
-        stdout: StdioCollector {
-            onStreamFinished: {
-                var out = [];
-                try {
-                    var parsed = JSON.parse(this.text);
-                    if (Array.isArray(parsed))
-                        out = parsed;
-                } catch (e) {
-                    out = [];
-                }
-                root.ddgResults = out;
-                root.focusIndex = 0;
-                root.pos = 0;
-            }
-        }
-    }
-
-    Process {
-        id: dlProc
-        property string target: ""
-        property string failed: ""
-        property string savedPath: ""
-        stdout: StdioCollector {
-            onStreamFinished: dlProc.savedPath = this.text.trim()
-        }
-        onExited: function(exitCode) {
-            if (exitCode === 0 && savedPath.length) {
-                failed = "";
-                Walls.refresh();
-                Walls.apply(savedPath);
-                root.exitSearch();
-            } else {
-                failed = target;
-            }
-            savedPath = "";
-        }
-    }
-
-    SearchField {
-        id: searchField
-        anchors.top: parent.top
-        anchors.topMargin: 6 * root.s
-        anchors.left: parent.left
-        anchors.leftMargin: 20 * root.s
-        anchors.right: parent.right
-        anchors.rightMargin: filterRow.width + 30 * root.s
-        s: root.s
-        placeholder: "Search wallpapers"
-        visible: root.searching
-        enabled: root.searching
-        horizontalNav: true
-        z: 30
-        onTextChanged: {
-            root.query = text;
-            debounce.restart();
-        }
-        onMoved: (d) => root.move(d)
-        onAccepted: root.activate()
-        onDismissed: root.exitSearch()
-        onKeyPressed: (e) => {
-            if (e.key === Qt.Key_Backspace && root.query.length <= 1 && searchField.input.selectedText.length === 0) {
-                root.exitSearch();
-                e.accepted = true;
-            }
-        }
-    }
-
-    component FilterChip: Item {
-        id: fchip
-
-        property string kind: ""
-        property string label: ""
-
-        width: fchipText.implicitWidth + 17 * root.s
-        height: parent ? parent.height : 0
-
-        Text {
-            id: fchipText
-            anchors.centerIn: parent
-            text: fchip.label
-            color: root.kindFilter === fchip.kind ? Theme.cream : Theme.faint
-            font.family: Theme.font
-            font.pixelSize: 9.5 * root.s
-            font.weight: Font.DemiBold
-            font.letterSpacing: 0.4 * root.s
-            Behavior on color { ColorAnimation { duration: Motion.fast } }
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.kindFilter = fchip.kind
-        }
-    }
-
     /**
-     * Kind filter as one inset capsule with a sliding highlight, matching the
-     * pill's segmented controls instead of three loose outlined chips.
+     * Album dropdown: a capsule naming the album on screen (plus the shuffle
+     * interval when one runs) that folds open a panel listing All and every
+     * album with its count, and a shuffle row underneath. Picking an album
+     * narrows the strip and the random pool; picking an interval starts or
+     * stops the automatic shuffle in Walls.
      */
     Rectangle {
-        id: filterRow
+        id: albumBtn
         anchors.top: parent.top
         anchors.topMargin: 9 * root.s
         anchors.right: parent.right
         anchors.rightMargin: 14 * root.s
         z: 40
-        width: segRow.implicitWidth + 6 * root.s
+        width: albumBtnRow.implicitWidth + 20 * root.s
         height: 22 * root.s
         radius: height / 2
-        color: Theme.frameBg
+        color: root.albumOpen ? Qt.alpha(Theme.onGlow, 0.18) : Theme.frameBg
         border.width: 1
-        border.color: Theme.hairSoft
-
-        readonly property Item currentChip: root.kindFilter === "all" ? chipAll : (root.kindFilter === "still" ? chipStill : chipLive)
-
-        Rectangle {
-            anchors.verticalCenter: parent.verticalCenter
-            height: parent.height - 4 * root.s
-            radius: height / 2
-            x: segRow.x + filterRow.currentChip.x + 2 * root.s
-            width: filterRow.currentChip.width - 4 * root.s
-            color: Qt.alpha(Theme.onGlow, 0.18)
-            border.width: 1
-            border.color: Qt.alpha(Theme.onGlow, 0.45)
-            Behavior on x { NumberAnimation { duration: Motion.standard; easing.type: Motion.easeStandard } }
-            Behavior on width { NumberAnimation { duration: Motion.standard; easing.type: Motion.easeStandard } }
-        }
+        border.color: root.albumOpen ? Qt.alpha(Theme.onGlow, 0.45) : (albumBtnHover.hovered ? Theme.border : Theme.hairSoft)
+        Behavior on color { ColorAnimation { duration: Motion.fast } }
 
         Row {
-            id: segRow
-            anchors.left: parent.left
-            anchors.leftMargin: 3 * root.s
-            height: parent.height
+            id: albumBtnRow
+            anchors.centerIn: parent
+            spacing: 5 * root.s
 
-            FilterChip { id: chipAll; kind: "all"; label: "all" }
-            FilterChip { id: chipStill; kind: "still"; label: "still" }
-            FilterChip { id: chipLive; kind: "motion"; label: "live" }
-        }
-    }
-
-    /**
-     * Current wallpaper folder as a quiet header caption. A click swaps the
-     * label for an inline path edit seeded from flags.json: Return commits the
-     * override (empty restores autodetect), Escape cancels. The field holds
-     * focus while editing, so its keys never reach the strip's type-to-search.
-     */
-    Item {
-        id: folderRow
-        anchors.top: parent.top
-        anchors.topMargin: 6 * root.s
-        anchors.left: parent.left
-        anchors.leftMargin: 20 * root.s
-        anchors.right: filterRow.left
-        anchors.rightMargin: 12 * root.s
-        height: 30 * root.s
-        visible: !root.searching
-        z: 30
-
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.left: parent.left
-            anchors.right: parent.right
-            visible: !root.editingDir
-            text: Walls.wpDir
-            elide: Text.ElideMiddle
-            color: folderHover.hovered ? Theme.subtle : Theme.faint
-            font.family: Theme.font
-            font.pixelSize: 9.5 * root.s
-            Behavior on color { ColorAnimation { duration: Motion.fast } }
-        }
-
-        TextInput {
-            id: dirField
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.left: parent.left
-            anchors.right: parent.right
-            visible: root.editingDir
-            enabled: root.editingDir
-            clip: true
-            color: Theme.cream
-            font.family: Theme.font
-            font.pixelSize: 11 * root.s
-            selectByMouse: true
-            selectionColor: Theme.verm
-            Keys.onPressed: (e) => {
-                if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) {
-                    Flags.wallpaperDir = dirField.text.trim();
-                    root.editingDir = false;
-                    e.accepted = true;
-                } else if (e.key === Qt.Key_Escape) {
-                    root.editingDir = false;
-                    e.accepted = true;
-                }
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.album.length > 0 ? root.album : "All"
+                color: Theme.cream
+                font.family: Theme.font
+                font.pixelSize: 9.5 * root.s
+                font.weight: Font.DemiBold
+                font.letterSpacing: 0.4 * root.s
             }
 
             Text {
-                anchors.fill: parent
-                verticalAlignment: Text.AlignVCenter
-                visible: dirField.text.length === 0
-                text: Walls.wpDir
-                elide: Text.ElideMiddle
-                color: Theme.faint
+                anchors.verticalCenter: parent.verticalCenter
+                visible: Flags.wallpaperShuffleMin > 0
+                text: "· " + root.shuffleLabel(Flags.wallpaperShuffleMin)
+                color: Theme.vermLit
                 font.family: Theme.font
-                font.pixelSize: 11 * root.s
+                font.pixelSize: 9.5 * root.s
+                font.weight: Font.DemiBold
+            }
+
+            GlyphIcon {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 10 * root.s
+                height: 10 * root.s
+                name: root.albumOpen ? "chevron-up" : "chevron-down"
+                color: Theme.subtle
+                stroke: 2
             }
         }
 
         HoverHandler {
-            id: folderHover
+            id: albumBtnHover
         }
 
         MouseArea {
             anchors.fill: parent
-            enabled: !root.editingDir
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.albumOpen = !root.albumOpen
+        }
+    }
+
+    /** Click-away catcher: any click outside the open panel closes it. */
+    MouseArea {
+        anchors.fill: parent
+        z: 45
+        visible: root.albumOpen
+        onClicked: root.albumOpen = false
+    }
+
+    component AlbumRow: Rectangle {
+        id: arow
+
+        property string value: ""
+        property string label: ""
+        property int count: 0
+        readonly property bool selected: root.album === value
+
+        width: albumList.cellWidth - 2 * root.s
+        height: albumList.cellHeight - 2 * root.s
+        radius: 6 * root.s
+        color: selected ? Qt.alpha(Theme.onGlow, 0.16) : (arowHover.hovered ? Theme.frameBg : "transparent")
+
+        Text {
+            anchors.left: parent.left
+            anchors.leftMargin: 9 * root.s
+            anchors.right: arowCount.left
+            anchors.rightMargin: 8 * root.s
+            anchors.verticalCenter: parent.verticalCenter
+            text: arow.label
+            elide: Text.ElideRight
+            color: arow.selected ? Theme.cream : Theme.subtle
+            font.family: Theme.font
+            font.pixelSize: 10 * root.s
+            font.weight: arow.selected ? Font.DemiBold : Font.Medium
+        }
+
+        Text {
+            id: arowCount
+            anchors.right: parent.right
+            anchors.rightMargin: 9 * root.s
+            anchors.verticalCenter: parent.verticalCenter
+            text: arow.count
+            color: Theme.faint
+            font.family: Theme.font
+            font.pixelSize: 9 * root.s
+            font.features: { "tnum": 1 }
+        }
+
+        HoverHandler {
+            id: arowHover
+        }
+
+        MouseArea {
+            anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
             onClicked: {
-                root.editingDir = true;
-                dirField.text = Flags.wallpaperDir;
-                Qt.callLater(dirField.forceActiveFocus);
+                Flags.wallpaperAlbum = arow.value;
+                root.albumOpen = false;
+            }
+        }
+    }
+
+    Rectangle {
+        id: albumPanel
+        anchors.top: albumBtn.bottom
+        anchors.topMargin: 5 * root.s
+        anchors.right: albumBtn.right
+        z: 50
+        visible: root.albumOpen
+        width: 250 * root.s
+        height: Math.min(albumList.contentHeight, root.height - y - shuffleBox.height - 22 * root.s) + shuffleBox.height + 14 * root.s
+        radius: 10 * root.s
+        color: Theme.tileBg
+        border.width: 1
+        border.color: Theme.border
+
+        // Swallow clicks on the panel's own padding so they don't close it.
+        MouseArea {
+            anchors.fill: parent
+        }
+
+        GridView {
+            id: albumList
+            anchors.top: parent.top
+            anchors.topMargin: 5 * root.s
+            anchors.left: parent.left
+            anchors.leftMargin: 5 * root.s
+            anchors.right: parent.right
+            anchors.rightMargin: 5 * root.s
+            height: parent.height - shuffleBox.height - 14 * root.s
+            clip: true
+            cellWidth: width / 2
+            cellHeight: 22 * root.s
+            boundsBehavior: Flickable.StopAtBounds
+            model: [{ name: "", label: "All", count: Walls.count }].concat(Walls.albums.map(function (a) {
+                return { name: a.name, label: a.name, count: a.count };
+            }))
+            delegate: AlbumRow {
+                required property var modelData
+                value: modelData.name
+                label: modelData.label
+                count: modelData.count
+            }
+        }
+
+        Rectangle {
+            anchors.bottom: shuffleBox.top
+            anchors.left: parent.left
+            anchors.leftMargin: 9 * root.s
+            anchors.right: parent.right
+            anchors.rightMargin: 9 * root.s
+            height: 1
+            color: Theme.hairSoft
+        }
+
+        Item {
+            id: shuffleBox
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 4 * root.s
+            anchors.left: parent.left
+            anchors.leftMargin: 9 * root.s
+            anchors.right: parent.right
+            anchors.rightMargin: 6 * root.s
+            height: 26 * root.s
+
+            Text {
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                text: "Shuffle"
+                color: Theme.subtle
+                font.family: Theme.font
+                font.pixelSize: 10 * root.s
+                font.weight: Font.Medium
+            }
+
+            Row {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 1 * root.s
+
+                Repeater {
+                    model: root.shuffleSteps
+
+                    delegate: Rectangle {
+                        id: step
+
+                        required property int modelData
+                        readonly property bool on: Flags.wallpaperShuffleMin === modelData
+
+                        width: stepText.implicitWidth + 9 * root.s
+                        height: 18 * root.s
+                        radius: height / 2
+                        color: on ? Qt.alpha(Theme.onGlow, 0.18) : (stepHover.hovered ? Theme.frameBg : "transparent")
+                        border.width: on ? 1 : 0
+                        border.color: Qt.alpha(Theme.onGlow, 0.45)
+
+                        Text {
+                            id: stepText
+                            anchors.centerIn: parent
+                            text: root.shuffleLabel(step.modelData)
+                            color: step.on ? Theme.cream : Theme.faint
+                            font.family: Theme.font
+                            font.pixelSize: 9 * root.s
+                            font.weight: Font.DemiBold
+                        }
+
+                        HoverHandler {
+                            id: stepHover
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Flags.wallpaperShuffleMin = step.modelData
+                        }
+                    }
+                }
             }
         }
     }
@@ -618,28 +509,20 @@ PillSurface {
             required property int index
             required property var modelData
 
-            readonly property string thumb: modelData.thumb !== undefined ? modelData.thumb : ""
-            readonly property bool remote: modelData.image !== undefined
-            readonly property string thumbSource: remote ? thumb : ("file://" + thumb)
+            readonly property string thumbSource: "file://" + modelData.thumb
 
             /**
              * Live preview gating: only the focused tile plays, and only once
              * the strip has settled on it, so paging never spins up decoders.
-             * Gifs play in place (remote ones stream the full file), videos
+             * Gifs play in place, videos
              * loop muted through the ffmpeg backend; everything else keeps the
              * static thumb, which also stays underneath as the loading frame.
              */
-            readonly property bool isGif: /\.gif(\?|$)/i.test(remote ? (modelData.image || "") : modelData.path)
-            readonly property string videoSource: remote
-                ? (focused && root.previewFile !== "" ? "file://" + root.previewFile : "")
-                : (/\.(mp4|webm|mkv|mov)$/i.test(modelData.path) ? "file://" + modelData.path : "")
+            readonly property bool isGif: /\.gif$/i.test(modelData.path)
+            readonly property string videoSource: /\.(mp4|webm|mkv|mov)$/i.test(modelData.path) ? "file://" + modelData.path : ""
             readonly property bool showPreview: focused && root.previewArmed && ao < 0.5
-            readonly property string resLabel: remote
-                ? (modelData.w > 0 ? modelData.w + "x" + modelData.h : "")
-                : (root.dimsCache[modelData.path] !== undefined ? root.dimsCache[modelData.path] : "")
-            readonly property bool motion: remote
-                ? (modelData.preview !== undefined || isGif)
-                : /\.(gif|mp4|webm|mkv|mov)$/i.test(modelData.path)
+            readonly property string resLabel: root.dimsCache[modelData.path] !== undefined ? root.dimsCache[modelData.path] : ""
+            readonly property bool motion: /\.(gif|mp4|webm|mkv|mov)$/i.test(modelData.path)
 
             readonly property real off: index - root.pos
             readonly property real ao: Math.abs(off)
@@ -707,7 +590,7 @@ PillSurface {
 
                 AnimatedImage {
                     anchors.fill: parent
-                    source: tile.showPreview && tile.isGif ? (tile.remote ? tile.modelData.image : "file://" + tile.modelData.path) : ""
+                    source: tile.showPreview && tile.isGif ? "file://" + tile.modelData.path : ""
                     playing: source != ""
                     visible: status === AnimatedImage.Ready
                     fillMode: Image.PreserveAspectCrop
@@ -791,20 +674,11 @@ PillSurface {
                     }
                 }
 
-                Text {
-                    anchors.centerIn: parent
-                    visible: tile.focused && tile.remote && dlProc.running && dlProc.target === tile.modelData.image
-                    text: "saving…"
-                    color: Theme.cream
-                    font.family: Theme.font
-                    font.pixelSize: 11 * root.s
-                }
-
                 Rectangle {
                     anchors.bottom: parent.bottom
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottomMargin: 6 * root.s
-                    visible: tile.focused && tile.resLabel.length > 0 && !(tile.remote && dlProc.running && dlProc.target === tile.modelData.image)
+                    visible: tile.focused && tile.resLabel.length > 0
                     width: resText.implicitWidth + 12 * root.s
                     height: resText.implicitHeight + 5 * root.s
                     radius: height / 2
@@ -826,19 +700,14 @@ PillSurface {
                 radius: tile.corner
                 color: "transparent"
                 border.width: 1
-                border.color: {
-                    if (tile.remote && dlProc.failed.length && dlProc.failed === tile.modelData.image)
-                        return Theme.vermLit;
-                    return tile.committing ? Theme.vermLit : Theme.border;
-                }
+                border.color: tile.committing ? Theme.vermLit : Theme.border
                 Behavior on border.color { ColorAnimation { duration: Motion.fast } }
             }
 
             HeatHold {
                 id: trashHeat
                 tapThreshold: 0.25
-                enabled: !tile.remote
-                onConfirmed: if (!tile.remote) Walls.trash(tile.modelData.path)
+                onConfirmed: Walls.trash(tile.modelData.path)
                 onTapped: root.activate()
             }
 
@@ -847,14 +716,10 @@ PillSurface {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onPressed: {
-                    if (!tile.focused)
-                        return;
-                    if (tile.remote)
-                        root.activate();
-                    else
+                    if (tile.focused)
                         trashHeat.press();
                 }
-                onReleased: if (tile.focused && !tile.remote) trashHeat.release()
+                onReleased: if (tile.focused) trashHeat.release()
                 onExited: trashHeat.cancel()
                 onClicked: if (!tile.focused) root.focusIndex = tile.index
             }
@@ -873,7 +738,7 @@ PillSurface {
 
                 onHoverOutChanged: if (tile.focused) root.monHover = hoverOut
 
-                visible: tile.focused && !tile.remote && root.monMap.tiles.length > 0
+                visible: tile.focused && root.monMap.tiles.length > 0
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.margins: 5 * root.s
@@ -945,25 +810,8 @@ PillSurface {
 
     Text {
         anchors.centerIn: parent
-        visible: root.itemCount === 0 && !searchProc.running
-        text: {
-            if (root.searching && root.query.length)
-                return "no results";
-            if (root.kindFilter === "motion")
-                return "no live wallpapers yet";
-            if (root.kindFilter === "still")
-                return "no still wallpapers";
-            return "No wallpapers in " + Walls.wpDir;
-        }
-        color: Theme.faint
-        font.family: Theme.font
-        font.pixelSize: 10.5 * root.s
-    }
-
-    Text {
-        anchors.centerIn: parent
-        visible: searchProc.running
-        text: "searching…"
+        visible: root.itemCount === 0
+        text: root.album.length > 0 ? "No wallpapers in " + root.album : "No wallpapers in " + Walls.wpDir
         color: Theme.faint
         font.family: Theme.font
         font.pixelSize: 10.5 * root.s
@@ -1021,7 +869,7 @@ PillSurface {
         anchors.bottomMargin: 9 * root.s
         width: hintLegend.width
         height: hintLegend.height
-        visible: root.itemCount > 0 && !root.searching
+        visible: root.itemCount > 0
         opacity: (root.hintShown || root.monHover.length > 0) ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Motion.standard } }
 

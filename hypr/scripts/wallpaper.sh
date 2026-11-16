@@ -50,8 +50,14 @@ ensure_daemon() {
   return 1
 }
 
+# Random picks draw from the album chosen in the wallpaper strip (a subfolder of
+# WPDIR), or from the whole folder when none is set or it no longer exists.
+ALBUM=$(jq -r '.wallpaperAlbum // ""' "$flags_file" 2>/dev/null || echo "")
+POOL="$WPDIR"
+[ -n "$ALBUM" ] && [ -d "$WPDIR/$ALBUM" ] && POOL="$WPDIR/$ALBUM"
+
 list_pics() {
-  find "$WPDIR" -type f \( -iname '*.jpg' -o -iname '*.png' -o -iname '*.gif' -o -iname '*.webp' -o -iname '*.mp4' -o -iname '*.webm' -o -iname '*.mkv' -o -iname '*.mov' \)
+  find "$POOL" -type f \( -iname '*.jpg' -o -iname '*.png' -o -iname '*.gif' -o -iname '*.webp' -o -iname '*.mp4' -o -iname '*.webm' -o -iname '*.mkv' -o -iname '*.mov' \)
 }
 
 refill_bag() {
@@ -77,6 +83,12 @@ pop_bag() {
 
   (
     flock 9
+
+    # The bag holds one pool's shuffle; switching albums starts a fresh one.
+    if [ "$(cat "$BAG.pool" 2>/dev/null)" != "$POOL" ]; then
+      : >"$BAG"
+      printf '%s\n' "$POOL" >"$BAG.pool"
+    fi
 
     while :; do
       if [ ! -s "$BAG" ]; then

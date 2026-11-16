@@ -473,18 +473,6 @@ Item {
             ldWall.item.activate();
     }
 
-    readonly property bool wallpaperSearching: pill.wallpaperOpen && ldWall.item !== null && ldWall.item.searching
-
-    /**
-     * Route the first printable keystroke over the open wallpaper strip into a
-     * DuckDuckGo search seeded with that character. No-op unless the wallpaper
-     * surface is open.
-     */
-    function wallpaperType(ch) {
-        if (pill.wallpaperOpen && ldWall.item)
-            ldWall.item.startSearch(ch);
-    }
-
     /**
      * Slide the open power surface's keyboard focus by `dir` tiles; +1 is right
      * and -1 is left. No-op unless the power surface is open.
