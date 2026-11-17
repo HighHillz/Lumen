@@ -329,13 +329,16 @@ PillSurface {
         }
     }
 
-    /** Name of the focused wallpaper, level with the album capsule. */
+    /**
+     * Name of the focused wallpaper, centred over the focused tile and level
+     * with the album capsule. Its width is mirrored off the capsule's left edge
+     * so the text stays truly centred and elides before reaching the capsule.
+     */
     Text {
-        anchors.left: parent.left
-        anchors.leftMargin: 16 * root.s
-        anchors.right: albumBtn.left
-        anchors.rightMargin: 12 * root.s
+        anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: albumBtn.verticalCenter
+        width: Math.max(0, 2 * (albumBtn.x - 12 * root.s) - root.width)
+        horizontalAlignment: Text.AlignHCenter
         z: 40
         visible: root.itemCount > 0
         text: root.shownName
