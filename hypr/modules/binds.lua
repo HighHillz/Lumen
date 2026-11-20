@@ -26,7 +26,7 @@ hl.bind(mod .. " + B", hl.dsp.exec_cmd('~/.config/hypr/scripts/wallpaper.sh ""')
 hl.bind(mod .. " + H", hl.dsp.exec_cmd('qs ipc call pill dnd ""')) -- Toggle DnD
 
 hl.bind(mod .. " + X", hl.dsp.exec_cmd('qs ipc call pill power ""')) -- Power
-hl.bind(mod .. " + A", hl.dsp.exec_cmd('qs ipc call pill link ""')) -- Network
+hl.bind(mod .. " + SHIFT + A", hl.dsp.exec_cmd('qs ipc call pill link ""')) -- Network
 hl.bind(mod .. " + U", hl.dsp.exec_cmd('qs ipc call pill mixer ""')) -- Audio mixer
 hl.bind(mod .. " + I", hl.dsp.exec_cmd('qs ipc call pill settings ""')) -- Settings
 hl.bind(mod .. " + R", hl.dsp.exec_cmd('qs ipc call pill screenrec ""')) -- Screen recorder

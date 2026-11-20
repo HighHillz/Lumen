@@ -27,6 +27,60 @@ Singleton {
     property var list: []
     property string editing: ""
 
+    /**
+     * Add-on spaces: rows another project (an agent, a scratchpad tool) drops in
+     * as ~/.config/lumen/spaces.d/*.json, each an object or an array of
+     * { id, name, key, note, glyph }. They show on the Workspaces page beside the
+     * built-ins and are reserved the same way; their binds and rules live with
+     * the add-on (typically via hypr/modules/private.lua), never in Lumen.
+     */
+    readonly property string extraDir: Quickshell.env("HOME") + "/.config/lumen/spaces.d"
+    property var extra: []
+
+    function loadExtra() {
+        extraProc.running = false;
+        extraProc.running = true;
+    }
+
+    Process {
+        id: extraProc
+        // One JSON value per line; a malformed file is skipped, not fatal to the rest.
+        command: ["sh", "-c",
+            "for f in \"$1\"/*.json; do [ -f \"$f\" ] && jq -c 'if type == \"array\" then .[] else . end' \"$f\" 2>/dev/null; done; true",
+            "sh", root.extraDir]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var out = [];
+                var seen = {};
+                var lines = this.text.split("\n");
+                for (var i = 0; i < lines.length; i++) {
+                    if (lines[i].trim().length === 0)
+                        continue;
+                    var e;
+                    try {
+                        e = JSON.parse(lines[i]);
+                    } catch (err) {
+                        continue;
+                    }
+                    if (!e || typeof e !== "object")
+                        continue;
+                    var id = root.slug(e.id || "");
+                    if (id.length === 0 || seen[id] || root.builtin(id))
+                        continue;
+                    seen[id] = true;
+                    out.push({
+                        id: id,
+                        name: root.clean(e.name || id),
+                        key: root.clean(e.key || ""),
+                        note: root.clean(e.note || ""),
+                        glyph: root.clean(e.glyph || "")
+                    });
+                }
+                root.extra = out;
+            }
+        }
+    }
+
     readonly property string header:
         "-- User-defined special workspaces. The Settings page rewrites this file, so keep\n"
         + "-- each entry on this shape. id is the special-workspace name, key is a single\n"
@@ -43,9 +97,19 @@ Singleton {
         return String(s).replace(/[{}"\\\n\r]/g, "").trim();
     }
 
-    /** The three built-in special ids a custom space must never shadow. */
-    function reserved(id) {
+    /** The three special ids Lumen itself owns. */
+    function builtin(id) {
         return id === "stash" || id === "private" || id === "minimized";
+    }
+
+    /** Ids a custom space must never shadow: the built-ins plus every add-on space. */
+    function reserved(id) {
+        if (root.builtin(id))
+            return true;
+        for (var i = 0; i < root.extra.length; i++)
+            if (root.extra[i].id === id)
+                return true;
+        return false;
     }
 
     /** Pull the fields out of one `{ ... }` entry block. Null when it has no id. */
@@ -249,6 +313,10 @@ Singleton {
         for (var i = 0; i < root.list.length; i++)
             if (root.list[i].id !== exceptId && root.list[i].key && root.list[i].key.toUpperCase() === k)
                 return true;
+        // Add-on keys are bound outside binds.lua, so check their declared chord too.
+        for (var j = 0; j < root.extra.length; j++)
+            if (root.extra[j].key.replace(/\s+/g, "").toUpperCase() === "SUPER+" + k)
+                return true;
         return Binds.inUse(bindsFile.text(), "SUPER + " + k, -1);
     }
 
@@ -288,5 +356,8 @@ Singleton {
         command: ["setsid", "-f", "sh", "-c", "sleep 0.4; hyprctl reload"]
     }
 
-    Component.onCompleted: root.refresh()
+    Component.onCompleted: {
+        root.refresh();
+        root.loadExtra();
+    }
 }

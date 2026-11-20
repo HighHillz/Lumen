@@ -129,6 +129,10 @@ Item {
                     for (var j = 0; j < sl.length; j++)
                         if (sl[j] && sl[j].id === id)
                             return sl[j].name;
+                    var ex = Spaces.extra;
+                    for (var k = 0; k < ex.length; k++)
+                        if (ex[k].id === id)
+                            return ex[k].name;
                     if (id === "minimized") return "Minimized";
                     if (id === "private") return "Private";
                     if (id === "stash") return "Stash";

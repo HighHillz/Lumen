@@ -7,7 +7,8 @@ import "Singletons"
 
 /**
  * WORKSPACES hub: a glance at Hyprland's special spaces and the keys that
- * summon them. The three built-in rows (Stash, Private, Minimized) sit on top;
+ * summon them. The three built-in rows (Stash, Private, Minimized) sit on top,
+ * followed by any add-on rows from ~/.config/lumen/spaces.d (see Spaces.extra);
  * below them every user-defined space from the Spaces store gets its own row with
  * a Super+<key> chip, a chevron into its app manager (SpaceApps) and a remove
  * control on hover. Clicking a row's NAME — built-in or custom — folds it open
@@ -54,11 +55,16 @@ PillSurface {
     /** Preset glyph picks for a space; every name exists in GlyphIcon's map. */
     readonly property var glyphChoices: ["layers", "lock", "sparkles", "app-window", "waves", "moon", "sun", "palette", "mic", "speaker"]
 
-    readonly property var spaces: [
+    readonly property var builtinSpaces: [
         { id: "stash", name: "Stash", key: "Super + S", note: "Background apps that open here", surface: "stash", glyph: "layers" },
         { id: "private", name: "Private", key: "Super + P", note: "Hidden scratchpad", surface: "", glyph: "lock" },
         { id: "minimized", name: "Minimized", key: "Super + Shift + M", note: "Minimized windows", surface: "", glyph: "chevron-down" }
     ]
+
+    /** Built-ins, then add-on spaces; add-ons have no surface of their own to open. */
+    readonly property var spaces: builtinSpaces.concat(Spaces.extra.map(function (e) {
+        return { id: e.id, name: e.name, key: e.key, note: e.note, surface: "", glyph: e.glyph.length ? e.glyph : "sparkles" };
+    }))
 
     /** Custom spaces only: built-in display-override entries stay out of the list. */
     readonly property var customSpaces: {
@@ -207,6 +213,8 @@ PillSurface {
     }
 
     onActiveChanged: {
+        if (active)
+            Spaces.loadExtra();
         formOpen = false;
         listening = false;
         conflict = "";
