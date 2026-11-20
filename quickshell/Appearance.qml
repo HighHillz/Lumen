@@ -85,6 +85,7 @@ SettingsSurface {
         { item: secRow, kind: "toggle", get: function () { return Flags.clockSeconds; }, set: function (v) { Flags.clockSeconds = v; } },
         { item: vizRow, kind: "toggle", get: function () { return Flags.musicViz; }, set: function (v) { Flags.musicViz = v; } },
         { item: paletteRow, kind: "seg", vals: ["static", "dynamic", "manual"], get: function () { return Flags.paletteMode; }, set: function (v) { root.applyMode(v); } },
+        { item: appThemeRow, kind: "seg", vals: ["light", "dark"], get: function () { return Flags.appTheme; }, set: function (v) { Flags.appTheme = v; } },
         { item: randomRow, kind: "seg", vals: ["all", "cursor"], get: function () { return Flags.randomScope; }, set: function (v) { if (Flags.wallpaperShuffleMin === 0) Flags.randomScope = v; } },
         { item: scaleRow, kind: "seg", vals: [0.9, 1.0, 1.1, 1.25], get: function () { return Flags.uiScale; }, set: function (v) { Flags.uiScale = v; } },
         { item: motionRow, kind: "toggle", get: function () { return Flags.reduceMotion; }, set: function (v) { Flags.reduceMotion = v; } },
@@ -352,6 +353,20 @@ SettingsSurface {
                         Behavior on opacity { NumberAnimation { duration: Motion.standard; easing.type: Motion.easeStandard } }
                     }
                 }
+            }
+        }
+
+        SettingsRow {
+            id: appThemeRow
+            surface: root
+            name: "System theme"
+            icon: Flags.appTheme === "dark" ? "moon" : "sun"
+
+            SettingsSeg {
+                s: root.s
+                options: [{ label: "Light", value: "light" }, { label: "Dark", value: "dark" }]
+                value: Flags.appTheme
+                onPicked: (v) => Flags.appTheme = v
             }
         }
 

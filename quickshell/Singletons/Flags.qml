@@ -18,6 +18,7 @@ Singleton {
     property alias time12h: adapter.time12h
     property alias clockSeconds: adapter.clockSeconds
     property alias paletteMode: adapter.paletteMode
+    property alias appTheme: adapter.appTheme
     property alias wallpaperDir: adapter.wallpaperDir
     property alias randomScope: adapter.randomScope
     property alias wallpaperAlbum: adapter.wallpaperAlbum
@@ -72,6 +73,8 @@ Singleton {
             property bool time12h: false
             property bool clockSeconds: false
             property string paletteMode: "static"
+            /** Light or dark preference handed to GTK apps and browsers through gsettings: "light" or "dark". */
+            property string appTheme: "light"
             /** Explicit wallpaper folder override. Empty means autodetect: the dir wallpaper.sh last resolved (lumen-wallpaper-dir state file), then $HOME/Pictures/Wallpapers. Lives in user state so an in-app update never clobbers a custom folder. */
             property string wallpaperDir: ""
             /** Super+B random target: "all" repaints every monitor, "cursor" only the one under the pointer. */

@@ -38,8 +38,38 @@ ShellRoot {
         Hyprland.refreshToplevels();
     }
 
+    /**
+     * App theme: publish Flags.appTheme as the desktop colour-scheme preference.
+     * libadwaita apps (Nautilus) and browsers on "system theme" read
+     * color-scheme through the settings portal. GTK3 apps ignore it and need
+     * the theme name instead, so the stock Adwaita theme is flipped to its
+     * dark variant too; a custom gtk-theme is left alone.
+     */
+    function applyAppTheme() {
+        appThemeProc.running = false;
+        appThemeProc.running = true;
+    }
+
+    Process {
+        id: appThemeProc
+        command: ["sh", "-c",
+            "if [ \"$1\" = dark ]; then cs=prefer-dark; gt=Adwaita-dark; else cs=prefer-light; gt=Adwaita; fi; " +
+            "gsettings set org.gnome.desktop.interface color-scheme \"$cs\" 2>/dev/null; " +
+            "case \"$(gsettings get org.gnome.desktop.interface gtk-theme 2>/dev/null)\" in " +
+            "\"'Adwaita'\"|\"'Adwaita-dark'\") gsettings set org.gnome.desktop.interface gtk-theme \"$gt\" 2>/dev/null;; esac",
+            "sh", Flags.appTheme]
+    }
+
+    Connections {
+        target: Flags
+        function onAppThemeChanged() {
+            root.applyAppTheme();
+        }
+    }
+
     Component.onCompleted: {
         refresh();
+        applyAppTheme();
         Devices.restore();
         // Singletons start lazily; touching Walls at login starts its wallpaper
         // shuffle timer without waiting for the strip to be opened.
