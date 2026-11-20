@@ -233,7 +233,9 @@ def render_fastfetch(pill):
         )
 
     repl = {
-        "__LANTERN__": str(ff / "lantern.txt"),
+        # Kept as "~" (fastfetch expands it) so the rendered config never bakes
+        # in one user's home path.
+        "__LANTERN__": "~/.config/fastfetch/lantern.txt",
         "__KEYS__": seq(pill["primary"]),
         "__SEP__": seq(pill["dim"]),
         "__LOGO1__": seq(pill["primary"]),

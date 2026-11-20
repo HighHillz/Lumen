@@ -1,7 +1,7 @@
 {
   "logo": {
     "type": "file",
-    "source": "/home/aprameyan/.config/fastfetch/lantern.txt",
+    "source": "~/.config/fastfetch/lantern.txt",
     "color": {
       "1": "38;2;121;116;241",
       "2": "38;2;205;203;235",

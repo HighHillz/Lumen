@@ -144,4 +144,4 @@ setup.
 
 ## Credits
 
-This repository is based on the upstream [Ricelin] project(https://github.com/Gakuseei/Ricelin) and some modifications from (https://github.com/aprameyansr/Lumen) and contains my personal modifications and configuration changes.
+This repository is based on the upstream [Ricelin] project(https://github.com/Gakuseei/Ricelin), some modifications from (https://github.com/aprameyansr/Lumen) and contains my personal modifications and configuration changes.
